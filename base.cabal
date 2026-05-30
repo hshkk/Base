@@ -62,13 +62,18 @@ library
         Base.Bin
         Base.Dom
         Base.Expr
+        Base.CBR.Eval
+        Base.CBR.Subst
         Base.CBR.Val
         Base.CBV.Eval
         Base.CBV.Subst
         Base.CBV.Val
+        Base.Text.Monad
 
     -- Modules included in this library but not exported.
-    -- other-modules:
+    other-modules:
+        Base.Text.Lex
+        Base.Text.Par
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
