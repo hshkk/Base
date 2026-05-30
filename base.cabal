@@ -68,6 +68,7 @@ library
         Base.CBV.Eval
         Base.CBV.Subst
         Base.CBV.Val
+        Base.CBV.Text.Pretty
         Base.Text.Monad
         Base.Text.Pretty
 

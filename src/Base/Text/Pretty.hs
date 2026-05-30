@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Base.Text.Pretty (pprProg, pprStmt, pprExpr) where
+module Base.Text.Pretty where
 
 import Base.Expr
 
@@ -33,7 +33,7 @@ pprPars =
 pprBody :: Body -> Doc ann
 pprBody (Ret ss e) =
     let pprRet = "return" <+> pprExpr e <> semi in
-    braces (nest 3 (line <> vsep (map pprStmt ss ++ [pprRet])) <> line)
+    braces (nest 4 (line <> vsep (map pprStmt ss ++ [pprRet])) <> line)
 
 pprExpr :: Expr -> Doc ann
 pprExpr (Var x)       = unpack x
@@ -57,3 +57,7 @@ pprBin Sub = "-"
 pprBin Mul = "*"
 pprBin Or  = "||"
 pprBin And = "&&"
+
+pprVal0 :: Val0 -> Doc ann
+pprVal0 (VCon c) = pprCon c
+pprVal0 VUn      = "?"
