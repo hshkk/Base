@@ -21,8 +21,8 @@ pprEnv :: Env -> Doc ann
 pprEnv r
     | Map.null r = brackets ""
     | otherwise  =
-        brackets (nest 3 (indent 3 (vsep (map pprBind (Map.toList r)))) <> line)
-    where pprBind (x,v) = unpack x <+> "=" <+> pprVal v <> comma
+        brackets (nest 3 (indent 3 ((vsep . punctuate comma . map pprBind) (Map.toList r))) <> line)
+    where pprBind (x,v) = unpack x <+> "=" <+> pprVal v
 
 -- hide environment contents within closures (unless empty)
 
@@ -40,5 +40,5 @@ pprEnv' :: Env -> Doc ann
 pprEnv' r
     | Map.null r = brackets ""
     | otherwise  =
-        brackets (nest 3 (indent 3 (vsep (map pprBind (Map.toList r)))) <> line)
-    where pprBind (x,v) = unpack x <+> "=" <+> pprVal' v <> comma
+        brackets (nest 3 (indent 3 ((vsep . punctuate comma . map pprBind) (Map.toList r))) <> line)
+    where pprBind (x,v) = unpack x <+> "=" <+> pprVal' v

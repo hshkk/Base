@@ -50,7 +50,6 @@ import qualified Data.ByteString.Lazy.Char8 as Byte (readFile)
 %right '&&'
 %left  '+' '-'
 %left  '*'
-%left  neg
 
 %%
 
@@ -103,8 +102,6 @@ expr :: {Expr}
     | expr '*'  expr {Bin Mul $1 $3}
     | expr '||' expr {Bin Or  $1 $3}
     | expr '&&' expr {Bin And $1 $3}
-    | '-' expr %prec neg 
-                     {Neg $2}
     | var '(' args ')'
                      {Inv $1 $3}
     | '(' expr ')'   {$2}

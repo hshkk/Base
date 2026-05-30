@@ -3,7 +3,7 @@ module Base.CBV.Eval where
 import Base.Bin (bin)
 import Base.Dom (restrict, dom)
 import Base.Expr
-    (Con(..), Prog, Stmt(..), Expr(..), Body(..), Val0(..))
+    (Prog, Stmt(..), Expr(..), Body(..), Val0(..))
 import Base.CBV.Subst (subst, substs)
 import Base.CBV.Val   (Env, Val(..))
 
@@ -22,6 +22,7 @@ evalS r (Proc f ps q) =
     let xs = map fst ps in subst r (f, VCls r xs q)
 evalS r (Prog p)      = restrict (evalP r p) (dom r)
 
+-- the typechecker (Base.Type) should catch all errors that might happen in evaluation!
 evalE :: Env -> Expr -> Val
 evalE r (Var x)
     | Just v <- Map.lookup x r = 
@@ -34,10 +35,6 @@ evalE r (Bin op e1 e2)
     | Val v1 <- evalE r e1
     , Val v2 <- evalE r e2 = Val (bin op v1 v2)
     | otherwise = error "Encountered a type mismatch when evaluating a binary operation"
-evalE r (Neg e)
-    | Val (VCon (I n)) <- evalE r e = Val (VCon (I (-n)))
-    | Val (VCon (B b)) <- evalE r e = Val (VCon (B (not b)))
-    | otherwise = error "Encountered a non-constant when evaluating negation"
 evalE r (Inv f es) 
     | Just (VCls s xs q) <- Map.lookup f r =
         let vs = map (evalE r) es in evalB (substs s (zip xs vs)) q

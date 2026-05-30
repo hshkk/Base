@@ -61,7 +61,9 @@ library
     exposed-modules:  
         Base.Bin
         Base.Dom
+        Base.Err
         Base.Expr
+        Base.Type
         Base.CBR.Eval
         Base.CBR.Subst
         Base.CBR.Val
