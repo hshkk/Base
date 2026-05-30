@@ -2,42 +2,48 @@ module Base.CBV.Eval where
 
 import Base.Bin (bin)
 import Base.Dom (restrict, dom)
+import Base.Err
 import Base.Expr
 import Base.CBV.Subst (subst, substs)
 import Base.CBV.Val   (Env, Val(..))
 
-import Data.List (foldl')
+import Control.Monad (mapM, foldM)
 
 import qualified Data.Map as Map
 
-evalP :: Env -> Prog -> Env
-evalP r ss = foldl' evalS r [s | At s _ <- ss]
+evalP :: Env -> Prog -> Err Env
+evalP r ss = foldM evalS r ss
 
-evalS :: Env -> Stmt -> Env
-evalS r (Decl x p)      = subst r (x, Val VUn)
-evalS r (x := (At e _)) = subst r (x, evalE r e)
-evalS r (Proc f ps q) =
-    let xs = map fst ps in subst r (f, VCls r xs q)
-evalS r (Prog p) = restrict (evalP r p) (dom r)
+evalS :: Env -> Tagged Stmt -> Err Env
+evalS r (At (Decl x p) _) = Right (subst r (x, Val VUn))
+evalS r (At (x := e) _)   = do
+    v <- evalE r e
+    Right (subst r (x, v))
+evalS r (At (Proc f ps q) _) =
+    let xs = map fst ps in Right (subst r (f, VCls r xs q))
+evalS r (At (Prog p) _) = do
+    s <- evalP r p
+    Right (restrict s (dom r))
 
--- the typechecker (Base.Type) should catch all errors that might happen in evaluation!
-evalE :: Env -> Expr -> Val
-evalE r (Var x)
+evalE :: Env -> Tagged Expr -> Err Val
+evalE r (At (Var x) (Posn l c))
     | Just v <- Map.lookup x r =
         case v of
-            Val VUn -> error "Encountered a variable without an assignment"
-            _       -> v
-    | otherwise = error "Encountered an unbound variable"
-evalE r (Con c) = Val (VCon c)
-evalE r (Bin op (At e1 _) (At e2 _))
-    | Val v1 <- evalE r e1
-    , Val v2 <- evalE r e2 = Val (bin op v1 v2)
-    | otherwise = error "Encountered a type mismatch when evaluating a binary operation"
-evalE r (Inv f es)
-    | Just (VCls s xs q) <- Map.lookup f r =
-        let vs = [evalE r e | At e _ <- es] in evalB (substs s (zip xs vs)) q
-    | otherwise = error "Encountered an invocation of a non-procedure"
+            Val VUn -> Left (buildError (Eval UnassignedVariable) l c (decode x))
+            _       -> Right v
+    | otherwise = undefined
+evalE r (At (Con c) _) = Right (Val (VCon c))
+evalE r (At (Bin op e1 e2) _)
+    | Right (Val v1) <- evalE r e1
+    , Right (Val v2) <- evalE r e2 = Right (Val (bin op v1 v2))
+    | otherwise = undefined
+evalE r (At (Inv f es) _)
+    | Just (VCls s xs q) <- Map.lookup f r = do
+        vs <- mapM (evalE r) es
+        evalB (substs s (zip xs vs)) q
+    | otherwise = undefined
 
-evalB :: Env -> Body -> Val
-evalB r0 (Ret ss (At e _)) =
-    let rn = foldl' evalS r0 [s | At s _ <- ss] in evalE rn e
+evalB :: Env -> Body -> Err Val
+evalB r0 (Ret ss e) = do
+    rn <- foldM evalS r0 ss
+    evalE rn e

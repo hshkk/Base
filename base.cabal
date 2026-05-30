@@ -69,6 +69,7 @@ library
         Base.CBR.Eval
         Base.CBR.Subst
         Base.CBR.Val
+        Base.CBR.Text.Pretty
         Base.CBV.Eval
         Base.CBV.Subst
         Base.CBV.Val

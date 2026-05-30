@@ -9,7 +9,7 @@ import Data.ByteString.Lazy.Char8 (ByteString)
 import Data.Text (Text)
 import Data.Text.Encoding (decodeLatin1)
 import Errata (Errata, blockSimple, errataSimple, prettyErrors)
-import Errata.Styles (fancyRedPointer, basicStyle)
+import Errata.Styles (basicStyle, basicPointer)
 
 import qualified Data.ByteString.Lazy.Char8 as Byte (toStrict)
 import qualified Data.Text as Text 
@@ -21,6 +21,7 @@ data ErrorType
     = Lexical
     | Syntax
     | Type TypeError
+    | Eval EvalError
     deriving Eq
 
 data TypeError
@@ -29,6 +30,11 @@ data TypeError
     | MismatchedAssignment Text Type -- x : A
     | MismatchedOperand    Bin       -- ⊕ : Π × Π -> Π
     | MismatchedArguments  !Int Type Text -- nth argument : A of f
+    deriving Eq
+
+data EvalError
+    = UnassignedVariable
+    | NonvariableArguments
     deriving Eq
 
 data Error = Error { 
@@ -51,15 +57,16 @@ packageError :: FilePath -> Error -> Errata
 packageError f (Error t l c u) = 
     errataSimple
         Nothing
-        (blockSimple basicStyle fancyRedPointer f
+        (blockSimple basicStyle basicPointer f
             (Just ("error: " <> packageErrorType t))
-            (l, c - Text.length u, c, Nothing)
+            (l, c, c, Nothing)
             (packageErrorMsg t))
         Nothing
     where 
         packageErrorType Lexical  = "Lexical error"
         packageErrorType Syntax   = "Invalid syntax"
         packageErrorType (Type _) = "Mismatched types"
+        packageErrorType (Eval _) = "Runtime error"
         packageErrorMsg  Lexical  = Nothing
         packageErrorMsg  Syntax   = Nothing
         packageErrorMsg  (Type UndeclaredVariable)
@@ -70,7 +77,7 @@ packageError f (Error t l c u) =
             = Just ("'" <> x <> "' has type '" <> render (pprType a) 
                         <> "', so I can't assign it an expression of type '" <> u <> "'.")
         packageErrorMsg  (Type (MismatchedOperand op))
-            = Just ("'" <> render (pprBin op) <> "' has type '" <> packageBin op 
+            = Just ("'_" <> render (pprBin op) <> "_' has type '" <> packageBin op 
                         <> "', but I received an operand of type '" <> u <> "'.")
             where 
                 packageBin Add = "(Int, Int) -> Int"
@@ -79,8 +86,12 @@ packageError f (Error t l c u) =
                 packageBin Or  = "(Bool, Bool) -> Bool"
                 packageBin And = "(Bool, Bool) -> Bool"
         packageErrorMsg  (Type (MismatchedArguments n a f))
-            = Just ("Parameter " <> Text.show n <> "of '" <> f <> "' has type '" <> render (pprType a) 
+            = Just ("Parameter " <> Text.show n <> " of '" <> f <> "' has type '" <> render (pprType a) 
                                  <> "', but I received an argument of type '" <> u <> "'.")
+        packageErrorMsg (Eval UnassignedVariable)
+            = Just ("'" <> u <> "' was declared as a variable, but it was never assigned to an expression.")
+        packageErrorMsg (Eval NonvariableArguments)
+            = Just ("I received a non-variable argument to '" <> u <> "', but cbr-Base only accepts variables there.")
         
 printError :: FilePath -> Text -> Error -> IO ()
 printError f src e = Text.putStrLn (prettyErrors src [packageError f e])
