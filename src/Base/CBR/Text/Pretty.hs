@@ -26,17 +26,11 @@ pprEnv r
         pprBind (x, Eq  v) = unpack x <+> "=" <+> pprVal v
         pprBind (x, Ptr y) = unpack x <+> "=>" <+> unpack y
 
--- hide environment contents within closures (unless empty)
+-- hide contents of closures
 
 pprVal' :: Val -> Doc ann
-pprVal' (Val v0)      = pprVal0 v0
-pprVal' (VCls r xs q) = pprCls' r xs q
-
-pprCls' :: Env -> [Var] -> Body -> Doc ann
-pprCls' r xs q  
-    | Map.null r = pprCls r xs q
-    | otherwise  = 
-        parens (brackets ".." <> comma <+> parens ((hsep . punctuate comma . map unpack) xs) <> pprBody q)
+pprVal' (Val v0) = pprVal0 v0
+pprVal' _        = parens ""
 
 pprEnv' :: Env -> Doc ann
 pprEnv' r

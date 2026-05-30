@@ -37,10 +37,12 @@ evalE r (At (Var x) (Posn l c))
             Ptr y        -> evalE r (At (Var y) (Posn l c))
     | otherwise = undefined
 evalE r (At (Con c) _) = Right (Val (VCon c), r)
-evalE r (At (Bin op e1 e2) _)
-    | Right (Val v1, r1) <- evalE r e1
-    , Right (Val v2, r2) <- evalE r1 e2 = Right (Val (bin op v1 v2), r2)
-    | otherwise = undefined
+evalE r (At (Bin op e1 e2) _) = do
+    (w1,r1) <- evalE r e1
+    (w2,r2) <- evalE r1 e2
+    case (w1,w2) of
+        (Val v1, Val v2) -> Right (Val (bin op v1 v2), r2)
+        _ -> undefined
 evalE r (At (Inv f es) (Posn l c))
     | Just (Eq (VCls s xs q)) <- Map.lookup f r = 
         case mapM (\(At e _) -> case e of {Var y -> Just y; _ -> Nothing}) es of

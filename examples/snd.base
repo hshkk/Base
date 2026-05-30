@@ -1,0 +1,11 @@
+{   a : Int = 1;
+    proc f(x : Int){
+        a = a + 1;
+        b : Int = x;
+        a = a + 1;
+        c : Int = x;
+        return b + c;
+    };
+    r : Int = f(a);
+    r = r + a;
+}

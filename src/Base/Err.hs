@@ -8,7 +8,7 @@ import Base.Text.Pretty
 import Data.ByteString.Lazy.Char8 (ByteString)
 import Data.Text (Text)
 import Data.Text.Encoding (decodeLatin1)
-import Errata (Errata, blockSimple, errataSimple, prettyErrors)
+import Errata (Errata, Style(..), blockSimple, errataSimple, prettyErrors)
 import Errata.Styles (basicStyle, basicPointer)
 
 import qualified Data.ByteString.Lazy.Char8 as Byte (toStrict)
@@ -53,11 +53,17 @@ buildError t l c u = Error {
     unexpected = u
     }
 
+errorStyle :: Style
+errorStyle = basicStyle
+    { styleLocation = \(f,l,c) ->
+        "[" <> Text.pack f <> "] line " <> Text.show l <> ", column " <> Text.show c
+    }
+
 packageError :: FilePath -> Error -> Errata
 packageError f (Error t l c u) = 
     errataSimple
         Nothing
-        (blockSimple basicStyle basicPointer f
+        (blockSimple errorStyle basicPointer f
             (Just ("error: " <> packageErrorType t))
             (l, c, c, Nothing)
             (packageErrorMsg t))
