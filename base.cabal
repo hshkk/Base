@@ -63,7 +63,9 @@ library
         Base.Dom
         Base.Err
         Base.Expr
+        Base.Test
         Base.Type
+        Base.Typechecker
         Base.CBR.Eval
         Base.CBR.Subst
         Base.CBR.Val
@@ -88,7 +90,9 @@ library
         base          >=4.17.2.1,
         bytestring    >=0.12.2.0 && <0.13.0.0,
         containers    >=0.6.7    && <0.7.0,
-        prettyprinter >=1.7.2    && <1.8.0
+        errata        >=0.4.0.3  && <0.5.0.0,
+        prettyprinter >=1.7.2    && <1.8.0,
+        text          >=2.1.4    && <2.2.0
 
     build-tool-depends:
         alex:alex     >=3.2.7.4  && <3.3.0.0,

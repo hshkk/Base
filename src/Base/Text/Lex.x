@@ -2,18 +2,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Base.Text.Lex where
 
+import Base.Err
 import Base.Expr (Var)
 import Base.Text.Monad
 
-import Control.Monad              (liftM)
+import Control.Monad (liftM)
 import Data.ByteString.Lazy.Char8 (ByteString)
-import Data.Int                   (Int64)
-import Data.Map                   (Map)
+import Data.Int  (Int64)
+import Data.Map  (Map)
+import Data.Text (Text)
 
 import qualified Data.ByteString.Internal   as Byte (w2c)
 import qualified Data.ByteString.Lazy       as Byte (uncons)
-import qualified Data.ByteString.Lazy.Char8 as Byte (readInt, take, readFile)
-import qualified Data.Map as Map
+import qualified Data.ByteString.Lazy.Char8 as Byte (readInt, take)
+import qualified Data.Map  as Map
+import qualified Data.Text as Text (pack)
 }
 
 %encoding "iso-8859-1"
@@ -87,47 +90,74 @@ data Constant
     = CInt  Int
     | CBool Bool
 
+-- pretty-printing tokens
+
+pprToken :: Token -> Text
+pprToken (TkVarId x) = decode x
+pprToken (TkReservedId ri) = case ri of
+    RIProc   -> "proc"
+    RIReturn -> "return"
+pprToken (TkReservedOp ro) = case ro of
+    ROColon           -> ":"
+    ROEquals          -> "="
+    ROPlus            -> "+"
+    ROMinus           -> "-"
+    ROTimes           -> "*"
+    RODoublePipe      -> "||"
+    RODoubleAmpersand -> "&&"
+pprToken (TkPrimId pi) = case pi of
+    PIInt  -> "Int"
+    PIBool -> "Bool"
+pprToken (TkConstant (CInt  n)) = Text.pack (show n)
+pprToken (TkConstant (CBool b)) = Text.pack (show b)
+pprToken (TkSpecial s) = case s of
+    SLParen    -> "("
+    SRParen    -> ")"
+    SLBrace    -> "{"
+    SRBrace    -> "}"
+    SComma     -> ","
+    SSemicolon -> ";"
+pprToken (TkUnexpected u) = decode u
+pprToken TkEOF = "end of file"
+
 -- wrapper
 
-type AlexInput = Inp
+type AlexInput = Input
 
 alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (Inp _ _ _ v) = v
+alexInputPrevChar (Input _ _ _ v) = v
 
 alexGetByte :: AlexInput -> Maybe (Byte, AlexInput)
-alexGetByte (Inp p b i _) = 
+alexGetByte (Input p b i _) = 
     case Byte.uncons i of
         Nothing     -> Nothing
         Just (c, j) ->
             let d = Byte.w2c c
                 q = movePosn p d
                 a = succ b
-            in q `seq` j `seq` a `seq` Just (c, Inp q a j d)
+            in q `seq` j `seq` a `seq` Just (c, Input q a j d)
 
 alexLexicalError :: P a
 alexLexicalError = do
-    Inp (Posn _ l c) _ _ _ <- getInp
+    Input (Posn _ l c) _ _ _ <- getInput
     alexLexicalErrorWith l c 
 
 alexLexicalErrorWith :: Int -> Int -> P a
 alexLexicalErrorWith l c = 
-    errP ((showString "lexical error at line " . 
-           shows l                             . 
-           showString ", column "              . 
-           shows c) [])
+    errP (buildError Lexical l c "")
 
 scanToken :: P Token
 scanToken = do
-    i@(Inp _ b _ _) <- getInp
+    i@(Input _ b _ _) <- getInput
     stcd <- getStcd
     case alexScan i stcd of
         AlexEOF -> return TkEOF
-        AlexError (Inp (Posn _ l c) _ _ _) -> alexLexicalErrorWith l c
+        AlexError (Input (Posn _ l c) _ _ _) -> alexLexicalErrorWith l c
         AlexSkip j _ -> do
-            setInp j
+            setInput j
             scanToken
-        AlexToken j@(Inp _ c _ _) _ a -> do
-            setInp j
+        AlexToken j@(Input _ c _ _) _ a -> do
+            setInput j
             a i (c - b)
 
 scanTokens :: P [Token]
@@ -136,13 +166,6 @@ scanTokens = do
     case tk of
         TkEOF -> return [TkEOF]
         _     -> liftM (tk:) scanTokens
-
-alexLexTest :: FilePath -> IO [Token]
-alexLexTest f = do
-    g <- Byte.readFile f
-    case runP g scanTokens of
-        Left  e   -> ioError (userError e)
-        Right tks -> return tks
 
 -- combinators
 
@@ -158,7 +181,7 @@ token = tokenWithString . const
 
 tokenWithString :: (ByteString -> Token) -> AlexAction Token
 tokenWithString f = \x l -> return (g x l)
-    where g (Inp _ _ x _) l = f (Byte.take l x)
+    where g (Input _ _ x _) l = f (Byte.take l x)
 
 -- actions
 
@@ -218,13 +241,13 @@ matchSpecial = tokenWithString match
         match s   = TkUnexpected s
 
 matchInt :: AlexAction Token
-matchInt (Inp _ _ bs _) l =
+matchInt (Input _ _ bs _) l =
     case Byte.readInt (Byte.take l bs) of
         Just (n, _) -> return (TkConstant (CInt n))
         Nothing     -> alexLexicalError
 
 matchBool :: AlexAction Token
-matchBool (Inp _ _ bs _) l =
+matchBool (Input _ _ bs _) l =
     case Byte.take l bs of
         "True"  -> return (TkConstant (CBool True))
         "False" -> return (TkConstant (CBool False))

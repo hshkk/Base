@@ -18,22 +18,30 @@ data Bin
     | Mul
     | Or  
     | And
+    deriving Eq
 
-type Prog = [Stmt]
+data Posn = Posn !Int -- line number
+                 !Int -- column number
+data Tagged a = At a Posn
+
+posnOf :: Tagged a -> Posn
+posnOf (At _ p) = p
+
+type Prog = [Tagged Stmt]
 
 data Stmt
     = Decl Var Prim
-    | Var := Expr
+    | Var := Tagged Expr
     | Proc Var [(Var, Prim)] Body
     | Prog Prog
 
-data Body = Ret [Stmt] Expr
+data Body = Ret [Tagged Stmt] (Tagged Expr)
 
 data Expr
     = Var Var
     | Con Con
-    | Bin Bin Expr Expr
-    | Inv Var [Expr]
+    | Bin Bin (Tagged Expr) (Tagged Expr)
+    | Inv Var [Tagged Expr]
 
 data Val0
     = VCon Con

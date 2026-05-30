@@ -1,11 +1,13 @@
 {
+{-# LANGUAGE OverloadedStrings #-}
 module Base.Text.Par where
 
-import Base.Expr
+import Base.Err
+import Base.Expr hiding (Posn)
 import Base.Text.Lex
 import Base.Text.Monad
 
-import qualified Data.ByteString.Lazy.Char8 as Byte (readFile)
+import qualified Base.Expr as Expr (Posn(..))
 }
 
 %expect 0
@@ -64,25 +66,30 @@ prim :: {Prim}
 prog :: {Prog}
     : '{' stmts '}'  {$2}
 
-stmts :: {[Stmt]}
+stmts :: {[Tagged Stmt]}
     : stmts0         {reverse $1}
 
-stmts0 :: {[Stmt]}
+stmts0 :: {[Tagged Stmt]}
     : {- ε -}        {[]}
     | stmts0 stmt ';' 
                      {$2:$1}
     | stmts0 inst ';' 
                      {$2 ++ $1}
 
-inst :: {[Stmt]} -- x : Π = e
-    : var ':' prim '=' expr {[$1 := $5, Decl $1 $3]}
+inst :: {[Tagged Stmt]} -- x : Π = e
+    : var ':' prim '=' expr 
+        {% do
+            (Input (Posn _ l c) _ _ _) <- getInput
+            let p = Expr.Posn l c
+            return [At ($1 := $5) p, At (Decl $1 $3) p]
+        }
 
-stmt :: {Stmt}
-    : var ':' prim   {Decl $1 $3}
-    | var '=' expr   {$1 := $3}
+stmt :: {Tagged Stmt}
+    : var ':' prim    {% tag (Decl $1 $3)}
+    | var '=' expr    {% tag ($1 := $3)}
     | 'proc' var '(' pars ')' body 
-                     {Proc $2 $4 $6}
-    | prog           {Prog $1}
+                      {% tag (Proc $2 $4 $6)}
+    | prog            {% tag (Prog $1)}
 
 pars :: {[(Var, Prim)]}
     : pars0          {reverse $1}
@@ -94,49 +101,42 @@ pars0 :: {[(Var, Prim)]}
     | pars0 ',' var ':' prim 
                      {($3,$5):$1}
 
-expr :: {Expr}
-    : var            {Var $1}
-    | con            {Con $1}
-    | expr '+'  expr {Bin Add $1 $3}
-    | expr '-'  expr {Bin Sub $1 $3}
-    | expr '*'  expr {Bin Mul $1 $3}
-    | expr '||' expr {Bin Or  $1 $3}
-    | expr '&&' expr {Bin And $1 $3}
+expr :: {Tagged Expr}
+    : var            {% tag (Var $1)}
+    | con            {% tag (Con $1)}
+    | expr '+'  expr {% tag (Bin Add $1 $3)}
+    | expr '-'  expr {% tag (Bin Sub $1 $3)}
+    | expr '*'  expr {% tag (Bin Mul $1 $3)}
+    | expr '||' expr {% tag (Bin Or  $1 $3)}
+    | expr '&&' expr {% tag (Bin And $1 $3)}
     | var '(' args ')'
-                     {Inv $1 $3}
+                     {% tag (Inv $1 $3)}
     | '(' expr ')'   {$2}
 
-args :: {[Expr]}
+args :: {[Tagged Expr]}
     : args0          {reverse $1}
 
-args0 :: {[Expr]}
+args0 :: {[Tagged Expr]}
     : {- ε -}        {[]}
     | expr           {[$1]}
-    | args0 ',' expr 
-                     {$3:$1}
+    | args0 ',' expr {$3:$1}
 
 body :: {Body}
     : '{' stmts 'return' expr ';' '}'
                      {Ret $2 $4}
 
 {
-happyParseTest :: FilePath -> IO Prog
-happyParseTest f = do
-    g <- Byte.readFile f
-    case runP g parseP of
-        Left  e -> ioError (userError e)
-        Right p -> return p
+tag :: a -> P (Tagged a)
+tag a = do
+    (Input (Posn _ l c) _ _ _) <- getInput
+    return (At a (Expr.Posn l c))
 
 happyParseError :: Token -> P a
-happyParseError _ = do
-    (Inp (Posn _ l c) _ _ _) <- getInp
+happyParseError tk = do
+    (Input (Posn _ l c) _ _ _) <- getInput
     errP (msg l c)
     where 
-        msg l c = 
-            (showString "parse error at line " .
-            shows l                           .
-            showString ", column "            .
-            shows c) ""
+        msg l c = buildError Syntax l c (pprToken tk)
 
 lexer :: (Token -> P a) -> P a
 lexer = \f -> scanToken >>= f

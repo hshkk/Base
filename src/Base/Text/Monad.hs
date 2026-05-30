@@ -1,8 +1,11 @@
 module Base.Text.Monad where
 
+import Base.Err
+
 import Data.ByteString.Lazy.Char8 (ByteString)
 import Data.Int  (Int64)
 import Data.Word (Word8)
+
 
 data Posn = Posn !Int -- absolute character offset
                  !Int -- line number
@@ -22,7 +25,7 @@ movePosn (Posn a l c) _    = Posn (succ a) l (succ c)
 
 type Byte = Word8
 
-data Inp = Inp {
+data Input = Input {
     inp_posn  :: !Posn,
     inp_bytes :: !Int64,
     inp       :: ByteString,
@@ -34,7 +37,7 @@ type Startcode = Int
 data PState = PState {
     st_posn   :: !Posn,      -- the position of the parser
     st_bytes  :: !Int64,     -- the number of bytes consumed so far
-    st_inp    :: ByteString, -- the current input
+    st_input  :: ByteString, -- the current input
     st_prev   :: !Char,      -- the preceding character
     st_stcd   :: !Startcode  -- the current startcode
     }
@@ -43,14 +46,14 @@ startPState :: ByteString -> PState
 startPState s = PState { 
     st_posn   = startPosn,
     st_bytes  = 0,
-    st_inp    = s,
+    st_input  = s,
     st_prev   = '\n',
     st_stcd   = 0
     }
 
 data PResult a 
     = Pass PState a
-    | Fail String
+    | Fail Error
 
 newtype P a = P { unP :: PState -> PResult a }
 
@@ -80,29 +83,29 @@ instance Monad P where
             Pass st' y -> unP (f y) st'
         )
 
-runP :: ByteString -> P a -> Either String a
+runP :: ByteString -> P a -> Err a
 runP s (P f) = case f (startPState s) of
     Fail g   -> Left  g
     Pass _ x -> Right x
 
-errP :: String -> P a
+errP :: Error -> P a
 errP = P . const . Fail
 
-getInp :: P Inp
-getInp = P (\st@(PState {
+getInput :: P Input
+getInput = P (\st@(PState {
                  st_posn  = p, 
                  st_bytes = b, 
-                 st_inp   = i, 
+                 st_input = i, 
                  st_prev  = v}) 
-    -> Pass st (Inp p b i v)
+    -> Pass st (Input p b i v)
     )
 
-setInp :: Inp -> P ()
-setInp (Inp p b i v) = P (\st -> 
+setInput :: Input -> P ()
+setInput (Input p b i v) = P (\st -> 
     let st' = st {
         st_posn  = p, 
         st_bytes = b, 
-        st_inp   = i, 
+        st_input = i, 
         st_prev  = v} 
     in Pass st' ()
     )
