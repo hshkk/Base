@@ -69,6 +69,7 @@ library
         Base.CBV.Subst
         Base.CBV.Val
         Base.Text.Monad
+        Base.Text.Pretty
 
     -- Modules included in this library but not exported.
     other-modules:
@@ -80,14 +81,15 @@ library
 
     -- Other library packages from which modules are imported.
     build-depends:    
-        array       >=0.5.4.0  && <0.6.0.0,
-        base        >=4.17.2.1,
-        bytestring  >=0.12.2.0 && <0.13.0.0,
-        containers  >=0.6.7    && <0.7.0
+        array         >=0.5.4.0  && <0.6.0.0,
+        base          >=4.17.2.1,
+        bytestring    >=0.12.2.0 && <0.13.0.0,
+        containers    >=0.6.7    && <0.7.0,
+        prettyprinter >=1.7.2    && <1.8.0
 
     build-tool-depends:
-        alex:alex   >=3.2.7.4  && <3.3.0.0,
-        happy:happy >=1.20.1.1 && <1.21.0.0
+        alex:alex     >=3.2.7.4  && <3.3.0.0,
+        happy:happy   >=1.20.1.1 && <1.21.0.0
 
     -- Directories containing source files.
     hs-source-dirs:   src
