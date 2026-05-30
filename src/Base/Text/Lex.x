@@ -36,7 +36,7 @@ $u    = [.\n]                   -- [u]niversal set
 
 <0>       [\(\)\{\}\,\;]   {matchSpecial}
 
-<0>       '-'?$d+          {matchInt}
+<0>       $d+              {matchInt}
 <0>       "True"|"False"   {matchBool}
 
 <0>       @r               {matchReservedOp}

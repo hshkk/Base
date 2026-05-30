@@ -32,6 +32,7 @@ data Expr
     = Var Var
     | Con Con
     | Bin Bin Expr Expr
+    | Neg Expr          -- induced by integer constants...
     | Inv Var [Expr]
 
 data Val0

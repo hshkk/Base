@@ -40,6 +40,9 @@ pprExpr (Var x)       = unpack x
 pprExpr (Con c)       = pprCon c
 pprExpr (Bin b e1 e2) = 
     pprExpr e1 <+> pprBin b <+> pprExpr e2
+pprExpr (Neg e)       = case e of
+    Bin _ _ _ -> "-" <> parens (pprExpr e)
+    _         -> "-" <> pprExpr e
 pprExpr (Inv f es)    = 
     unpack f <> parens (hsep (punctuate comma (map pprExpr es)))
 

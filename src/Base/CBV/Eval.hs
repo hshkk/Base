@@ -3,7 +3,7 @@ module Base.CBV.Eval where
 import Base.Bin (bin)
 import Base.Dom (restrict, dom)
 import Base.Expr
-    (Prog, Stmt(..), Expr(..), Body(..), Val0(..))
+    (Con(..), Prog, Stmt(..), Expr(..), Body(..), Val0(..))
 import Base.CBV.Subst (subst, substs)
 import Base.CBV.Val   (Env, Val(..))
 
@@ -34,6 +34,10 @@ evalE r (Bin op e1 e2)
     | Val v1 <- evalE r e1
     , Val v2 <- evalE r e2 = Val (bin op v1 v2)
     | otherwise = error "Encountered a type mismatch when evaluating a binary operation"
+evalE r (Neg e)
+    | Val (VCon (I n)) <- evalE r e = Val (VCon (I (-n)))
+    | Val (VCon (B b)) <- evalE r e = Val (VCon (B (not b)))
+    | otherwise = error "Encountered a non-constant when evaluating negation"
 evalE r (Inv f es) 
     | Just (VCls s xs q) <- Map.lookup f r =
         let vs = map (evalE r) es in evalB (substs s (zip xs vs)) q
