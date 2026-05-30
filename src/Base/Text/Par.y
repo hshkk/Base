@@ -69,7 +69,13 @@ stmts :: {[Stmt]}
 
 stmts0 :: {[Stmt]}
     : {- ε -}        {[]}
-    | stmts0 stmt ';' {$2:$1}
+    | stmts0 stmt ';' 
+                     {$2:$1}
+    | stmts0 inst ';' 
+                     {$2 ++ $1}
+
+inst :: {[Stmt]} -- x : Π = e
+    : var ':' prim '=' expr {[$1 := $5, Decl $1 $3]}
 
 stmt :: {Stmt}
     : var ':' prim   {Decl $1 $3}
@@ -83,6 +89,8 @@ pars :: {[(Var, Prim)]}
 
 pars0 :: {[(Var, Prim)]}
     : {- ε -}        {[]}
+    | var ':' prim           
+                     {[($1,$3)]}
     | pars0 ',' var ':' prim 
                      {($3,$5):$1}
 
@@ -103,6 +111,7 @@ args :: {[Expr]}
 
 args0 :: {[Expr]}
     : {- ε -}        {[]}
+    | expr           {[$1]}
     | args0 ',' expr 
                      {$3:$1}
 

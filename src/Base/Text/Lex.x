@@ -12,7 +12,7 @@ import Data.Map                   (Map)
 
 import qualified Data.ByteString.Internal   as Byte (w2c)
 import qualified Data.ByteString.Lazy       as Byte (uncons)
-import qualified Data.ByteString.Lazy.Char8 as Byte (readInt, take)
+import qualified Data.ByteString.Lazy.Char8 as Byte (readInt, take, readFile)
 import qualified Data.Map as Map
 }
 
@@ -28,7 +28,7 @@ $u    = [.\n]                   -- [u]niversal set
 
 @r    = ":"|"="|"+"|"-"|"*"|"||"|"&&"
 
-@w   = $white+                  -- [w]hitespace
+@w    = $white+                 -- [w]hitespace
 
 :-
 
@@ -137,6 +137,13 @@ scanTokens = do
         TkEOF -> return [TkEOF]
         _     -> liftM (tk:) scanTokens
 
+alexLexTest :: FilePath -> IO [Token]
+alexLexTest f = do
+    g <- Byte.readFile f
+    case runP g scanTokens of
+        Left  e   -> ioError (userError e)
+        Right tks -> return tks
+
 -- combinators
 
 type AlexAction a = AlexInput -> Int64 -> P a
@@ -156,7 +163,7 @@ tokenWithString f = \x l -> return (g x l)
 -- actions
 
 reservedId :: Map ByteString Token
-reservedId = Map.fromAscList
+reservedId = Map.fromList
     [ ("proc"  , TkReservedId RIProc)
     , ("return", TkReservedId RIReturn)
     ]
@@ -169,7 +176,7 @@ matchVarId = tokenWithString match
             | otherwise = TkVarId s
 
 primId :: Map ByteString Token
-primId = Map.fromAscList
+primId = Map.fromList
     [ ("Int" , TkPrimId PIInt)
     , ("Bool", TkPrimId PIBool)
     ]
@@ -182,7 +189,7 @@ matchPrimId = tokenWithString match
             | otherwise = TkUnexpected s
 
 reservedOp :: Map ByteString Token
-reservedOp = Map.fromAscList
+reservedOp = Map.fromList
     [ (":"  , TkReservedOp ROColon)
     , ("="  , TkReservedOp ROEquals)
     , ("+"  , TkReservedOp ROPlus)

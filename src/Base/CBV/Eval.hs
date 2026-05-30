@@ -13,13 +13,13 @@ import qualified Data.Map as Map
 
 evalP :: Env -> Prog -> Env
 evalP r []    = r
-evalP r (s:zs) = evalP (evalS r s) zs
+evalP r (s:ss) = evalP (evalS r s) ss
 
 evalS :: Env -> Stmt -> Env
 evalS r (Decl x p)    = subst r (x, Val VUn)
 evalS r (x := e)      = subst r (x, evalE r e)
-evalS r (Proc f ms q) = 
-    let xs = map fst ms in subst r (f, VCls r xs q)
+evalS r (Proc f ps q) = 
+    let xs = map fst ps in subst r (f, VCls r xs q)
 evalS r (Prog p)      = restrict (evalP r p) (dom r)
 
 evalE :: Env -> Expr -> Val
