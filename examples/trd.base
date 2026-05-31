@@ -1,0 +1,14 @@
+{
+    a : Int = 1;
+    proc g(y : Int) {
+        a = a + 1;
+        b : Int = y;
+        a = a + 1;
+        c : Int = y;
+        return b + c;
+    };
+    proc f(x : Int) {
+        return g(x);
+    };
+    r : Int = f(a);
+}

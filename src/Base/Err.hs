@@ -97,7 +97,7 @@ packageError f (Error t l c u) =
         packageErrorMsg (Eval UnassignedVariable)
             = Just ("'" <> u <> "' was declared as a variable, but it was never assigned to an expression.")
         packageErrorMsg (Eval NonvariableArguments)
-            = Just ("I received a non-variable argument to '" <> u <> "', but cbr-Base only accepts variables there.")
+            = Just ("I received a non-variable argument to '" <> u <> "', but cbr-Base requires all procedure arguments to be variables.")
         
 printError :: FilePath -> Text -> Error -> IO ()
 printError f src e = Text.putStrLn (prettyErrors src [packageError f e])

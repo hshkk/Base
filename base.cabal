@@ -66,6 +66,14 @@ library
         Base.Test
         Base.Type
         Base.Typechecker
+        Base.CBNa.Eval
+        Base.CBNa.Subst
+        Base.CBNa.Val
+        Base.CBNa.Text.Pretty
+        Base.CBNe.Eval
+        Base.CBNe.Subst
+        Base.CBNe.Val
+        Base.CBNe.Text.Pretty
         Base.CBR.Eval
         Base.CBR.Subst
         Base.CBR.Val

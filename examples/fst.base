@@ -1,6 +1,6 @@
 {   a : Int = 5;
     b : Int = 10;
-    {   proc f(x : Int, y : Int){
+    {   proc f(x : Int, y : Int) {
             z : Int = x;
             return z + y;
         };
@@ -8,7 +8,7 @@
         b = b + c;
     };
     c : Bool;
-    {   proc g(x : Bool, y : Bool){
+    {   proc g(x : Bool, y : Bool) {
             x = x && y;
             proc h(z : Bool){
                 return z;

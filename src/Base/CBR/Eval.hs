@@ -10,9 +10,6 @@ import Base.CBR.Val
 import Control.Monad (mapM, foldM)
 
 import qualified Data.Map as Map
-import Base.CBR.Text.Pretty (pprEnv')
-import Prettyprinter.Render.String (renderString)
-import Prettyprinter (layoutPretty, defaultLayoutOptions)
 
 evalP :: Env -> Prog -> Err Env
 evalP r ss = foldM evalS r ss
