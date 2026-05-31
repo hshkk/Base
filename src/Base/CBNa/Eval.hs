@@ -1,7 +1,7 @@
 module Base.CBNa.Eval where
 
 import Base.Bin (bin)
-import Base.Dom (restrict, dom)
+import Base.Dom (restrict, dom, fv)
 import Base.Err
 import Base.Expr
 import Base.CBNa.Subst (subst, substs)
@@ -10,6 +10,7 @@ import Base.CBNa.Val
 import Control.Monad (mapM, foldM)
 
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 evalP :: Env -> Prog -> Err Env
 evalP r ss = foldM evalS r ss
@@ -42,7 +43,8 @@ evalE r (At (Bin op e1 e2) _) = do
         _ -> undefined
 evalE r (At (Inv f es) _)
     | Just (Eq (VCls s xs q)) <- Map.lookup f r = do
-        (v,z) <- evalB (substs s (zip xs [Thunk e | At e _ <- es])) q
+        (v,z) <- evalB (substs s (zip xs [Thunk e | At e _ <- es] 
+                    ++ Map.toList (restrict r (Set.unions (map fv es))))) q
         Right (v, substs r (Map.toList (restrict z (dom r))))
     | otherwise = undefined
 
