@@ -54,13 +54,13 @@ $u    = [.\n]                   -- [u]niversal set
 type Id = Var
 
 data Token
-    = TkVarId      Id
-    | TkReservedId ReservedId
-    | TkReservedOp ReservedOp
-    | TkPrimId     PrimId
-    | TkConstant   Constant
-    | TkSpecial    Special
-    | TkUnexpected Id
+    = TkVarId      Posn Id
+    | TkReservedId Posn ReservedId
+    | TkReservedOp Posn ReservedOp
+    | TkPrimId     Posn PrimId
+    | TkConstant   Posn Constant
+    | TkSpecial    Posn Special
+    | TkUnexpected Posn Id
     | TkEOF
 
 data ReservedId
@@ -93,11 +93,11 @@ data Constant
 -- pretty-printing tokens
 
 pprToken :: Token -> Text
-pprToken (TkVarId x) = decode x
-pprToken (TkReservedId ri) = case ri of
+pprToken (TkVarId _ x) = decode x
+pprToken (TkReservedId _ ri) = case ri of
     RIProc   -> "proc"
     RIReturn -> "return"
-pprToken (TkReservedOp ro) = case ro of
+pprToken (TkReservedOp _ ro) = case ro of
     ROColon           -> ":"
     ROEquals          -> "="
     ROPlus            -> "+"
@@ -105,19 +105,19 @@ pprToken (TkReservedOp ro) = case ro of
     ROTimes           -> "*"
     RODoublePipe      -> "||"
     RODoubleAmpersand -> "&&"
-pprToken (TkPrimId pi) = case pi of
+pprToken (TkPrimId _ pi) = case pi of
     PIInt  -> "Int"
     PIBool -> "Bool"
-pprToken (TkConstant (CInt  n)) = Text.pack (show n)
-pprToken (TkConstant (CBool b)) = Text.pack (show b)
-pprToken (TkSpecial s) = case s of
+pprToken (TkConstant _ (CInt  n)) = Text.pack (show n)
+pprToken (TkConstant _ (CBool b)) = Text.pack (show b)
+pprToken (TkSpecial _ s) = case s of
     SLParen    -> "("
     SRParen    -> ")"
     SLBrace    -> "{"
     SRBrace    -> "}"
     SComma     -> ","
     SSemicolon -> ";"
-pprToken (TkUnexpected u) = decode u
+pprToken (TkUnexpected _ u) = decode u
 pprToken TkEOF = "end of file"
 
 -- wrapper
@@ -176,80 +176,80 @@ begin c _ _ = do
     setStcd c
     scanToken
 
-token :: Token -> AlexAction Token
-token = tokenWithString . const
+token :: (Posn -> Token) -> AlexAction Token
+token f = tokenWithString (\p _ -> f p)
 
-tokenWithString :: (ByteString -> Token) -> AlexAction Token
+tokenWithString :: (Posn -> ByteString -> Token) -> AlexAction Token
 tokenWithString f = \x l -> return (g x l)
-    where g (Input _ _ x _) l = f (Byte.take l x)
+    where g (Input p _ x _) l = f p (Byte.take l x)
 
 -- actions
 
-reservedId :: Map ByteString Token
+reservedId :: Map ByteString (Posn -> Token)
 reservedId = Map.fromList
-    [ ("proc"  , TkReservedId RIProc)
-    , ("return", TkReservedId RIReturn)
+    [ ("proc"  , \p -> TkReservedId p RIProc)
+    , ("return", \p -> TkReservedId p RIReturn)
     ]
 
 matchVarId :: AlexAction Token
 matchVarId = tokenWithString match
     where 
-        match s 
-            | Just tk <- Map.lookup s reservedId = tk
-            | otherwise = TkVarId s
+        match p s
+            | Just f <- Map.lookup s reservedId = f p
+            | otherwise = TkVarId p s
 
-primId :: Map ByteString Token
+primId :: Map ByteString (Posn -> Token)
 primId = Map.fromList
-    [ ("Int" , TkPrimId PIInt)
-    , ("Bool", TkPrimId PIBool)
+    [ ("Int" , \p -> TkPrimId p PIInt)
+    , ("Bool", \p -> TkPrimId p PIBool)
     ]
 
 matchPrimId :: AlexAction Token
 matchPrimId = tokenWithString match
     where 
-        match s 
-            | Just tk <- Map.lookup s primId = tk
-            | otherwise = TkUnexpected s
+        match p s
+            | Just f <- Map.lookup s primId = f p
+            | otherwise = TkUnexpected p s
 
-reservedOp :: Map ByteString Token
+reservedOp :: Map ByteString (Posn -> Token)
 reservedOp = Map.fromList
-    [ (":"  , TkReservedOp ROColon)
-    , ("="  , TkReservedOp ROEquals)
-    , ("+"  , TkReservedOp ROPlus)
-    , ("-"  , TkReservedOp ROMinus)
-    , ("*"  , TkReservedOp ROTimes)
-    , ("||" , TkReservedOp RODoublePipe)
-    , ("&&" , TkReservedOp RODoubleAmpersand)
+    [ (":"  , \p -> TkReservedOp p ROColon)
+    , ("="  , \p -> TkReservedOp p ROEquals)
+    , ("+"  , \p -> TkReservedOp p ROPlus)
+    , ("-"  , \p -> TkReservedOp p ROMinus)
+    , ("*"  , \p -> TkReservedOp p ROTimes)
+    , ("||" , \p -> TkReservedOp p RODoublePipe)
+    , ("&&" , \p -> TkReservedOp p RODoubleAmpersand)
     ]
 
 matchReservedOp :: AlexAction Token
 matchReservedOp = tokenWithString match
     where
-        match s
-            | Just tk <- Map.lookup s reservedOp = tk
-            | otherwise = TkUnexpected s
+        match p s
+            | Just f <- Map.lookup s reservedOp = f p
+            | otherwise = TkUnexpected p s
 
 matchSpecial :: AlexAction Token
 matchSpecial = tokenWithString match
     where
-        match "(" = TkSpecial SLParen
-        match ")" = TkSpecial SRParen
-        match "{" = TkSpecial SLBrace
-        match "}" = TkSpecial SRBrace
-        match "," = TkSpecial SComma
-        match ";" = TkSpecial SSemicolon
-        match s   = TkUnexpected s
+        match p "(" = TkSpecial p SLParen
+        match p ")" = TkSpecial p SRParen
+        match p "{" = TkSpecial p SLBrace
+        match p "}" = TkSpecial p SRBrace
+        match p "," = TkSpecial p SComma
+        match p ";" = TkSpecial p SSemicolon
+        match p s   = TkUnexpected p s
 
 matchInt :: AlexAction Token
-matchInt (Input _ _ bs _) l =
+matchInt (Input p _ bs _) l =
     case Byte.readInt (Byte.take l bs) of
-        Just (n, _) -> return (TkConstant (CInt n))
+        Just (n, _) -> return (TkConstant p (CInt n))
         Nothing     -> alexLexicalError
 
 matchBool :: AlexAction Token
-matchBool (Input _ _ bs _) l =
+matchBool (Input p _ bs _) l =
     case Byte.take l bs of
-        "True"  -> return (TkConstant (CBool True))
-        "False" -> return (TkConstant (CBool False))
+        "True"  -> return (TkConstant p (CBool True))
+        "False" -> return (TkConstant p (CBool False))
         _       -> alexLexicalError
 }

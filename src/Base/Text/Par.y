@@ -22,31 +22,31 @@ import qualified Base.Expr as Expr (Posn(..))
 
 %tokentype {Token}
 %token
-    var       {TkVarId $$}
+    var       {TkVarId      _ _}
 
-    'proc'    {TkReservedId RIProc}
-    'return'  {TkReservedId RIReturn}
+    'proc'    {TkReservedId _ RIProc}
+    'return'  {TkReservedId _ RIReturn}
 
-    ':'       {TkReservedOp ROColon}
-    '='       {TkReservedOp ROEquals}
-    '+'       {TkReservedOp ROPlus}
-    '-'       {TkReservedOp ROMinus}
-    '*'       {TkReservedOp ROTimes}
-    '||'      {TkReservedOp RODoublePipe}
-    '&&'      {TkReservedOp RODoubleAmpersand}
+    ':'       {TkReservedOp _ ROColon}
+    '='       {TkReservedOp _ ROEquals}
+    '+'       {TkReservedOp _ ROPlus}
+    '-'       {TkReservedOp _ ROMinus}
+    '*'       {TkReservedOp _ ROTimes}
+    '||'      {TkReservedOp _ RODoublePipe}
+    '&&'      {TkReservedOp _ RODoubleAmpersand}
 
-    'Int'     {TkPrimId PIInt}
-    'Bool'    {TkPrimId PIBool}
+    'Int'     {TkPrimId     _ PIInt}
+    'Bool'    {TkPrimId     _ PIBool}
 
-    int       {TkConstant (CInt  $$)}
-    bool      {TkConstant (CBool $$)}
+    int       {TkConstant   _ (CInt  _)}
+    bool      {TkConstant   _ (CBool _)}
 
-    '('       {TkSpecial SLParen}
-    ')'       {TkSpecial SRParen}
-    '{'       {TkSpecial SLBrace}
-    '}'       {TkSpecial SRBrace}
-    ','       {TkSpecial SComma}
-    ';'       {TkSpecial SSemicolon}
+    '('       {TkSpecial    _ SLParen}
+    ')'       {TkSpecial    _ SRParen}
+    '{'       {TkSpecial    _ SLBrace}
+    '}'       {TkSpecial    _ SRBrace}
+    ','       {TkSpecial    _ SComma}
+    ';'       {TkSpecial    _ SSemicolon}
 
 %right '||'
 %right '&&'
@@ -55,9 +55,9 @@ import qualified Base.Expr as Expr (Posn(..))
 
 %%
 
-con :: {Con}
-    : int            {I $1}
-    | bool           {B $1}
+con :: {Tagged Con}
+    : int            {At (I (tkInt  $1)) (tkPosn $1)}
+    | bool           {At (B (tkBool $1)) (tkPosn $1)}
 
 prim :: {Prim}
     : 'Int'          {Int}
@@ -78,18 +78,19 @@ stmts0 :: {[Tagged Stmt]}
 
 inst :: {[Tagged Stmt]} -- x : Π = e
     : var ':' prim '=' expr 
-        {% do
-            (Input (Posn _ l c) _ _ _) <- getInput
-            let p = Expr.Posn l c
-            return [At ($1 := $5) p, At (Decl $1 $3) p]
+        { let p = tkPosn $1
+          in [At (tkVar $1 := $5) p, At (Decl (tkVar $1) $3) p]
         }
 
 stmt :: {Tagged Stmt}
-    : var ':' prim    {% tag (Decl $1 $3)}
-    | var '=' expr    {% tag ($1 := $3)}
+    : var ':' prim    {At (Decl (tkVar $1) $3) (tkPosn $1)}
+    | var '=' expr    {At (tkVar $1 := $3)     (tkPosn $1)}
     | 'proc' var '(' pars ')' body 
-                      {% tag (Proc $2 $4 $6)}
-    | prog            {% tag (Prog $1)}
+                      {At (Proc (tkVar $2) $4 $6) (tkPosn $1)}
+    | tprog           {$1}
+
+tprog :: {Tagged Stmt}
+    : '{' stmts '}'  {At (Prog $2) (tkPosn $1)}
 
 pars :: {[(Var, Prim)]}
     : pars0          {reverse $1}
@@ -97,20 +98,20 @@ pars :: {[(Var, Prim)]}
 pars0 :: {[(Var, Prim)]}
     : {- ε -}        {[]}
     | var ':' prim           
-                     {[($1,$3)]}
+                     {[(tkVar $1,$3)]}
     | pars0 ',' var ':' prim 
-                     {($3,$5):$1}
+                     {(tkVar $3,$5):$1}
 
 expr :: {Tagged Expr}
-    : var            {% tag (Var $1)}
-    | con            {% tag (Con $1)}
-    | expr '+'  expr {% tag (Bin Add $1 $3)}
-    | expr '-'  expr {% tag (Bin Sub $1 $3)}
-    | expr '*'  expr {% tag (Bin Mul $1 $3)}
-    | expr '||' expr {% tag (Bin Or  $1 $3)}
-    | expr '&&' expr {% tag (Bin And $1 $3)}
+    : var            {At (Var (tkVar $1))  (tkPosn $1)}
+    | con            {let At c p = $1 in At (Con c) p}
+    | expr '+'  expr {At (Bin Add $1 $3)  (tkPosn $2)}
+    | expr '-'  expr {At (Bin Sub $1 $3)  (tkPosn $2)}
+    | expr '*'  expr {At (Bin Mul $1 $3)  (tkPosn $2)}
+    | expr '||' expr {At (Bin Or  $1 $3)  (tkPosn $2)}
+    | expr '&&' expr {At (Bin And $1 $3)  (tkPosn $2)}
     | var '(' args ')'
-                     {% tag (Inv $1 $3)}
+                     {At (Inv (tkVar $1) $3) (tkPosn $1)}
     | '(' expr ')'   {$2}
 
 args :: {[Tagged Expr]}
@@ -126,17 +127,39 @@ body :: {Body}
                      {Ret $2 $4}
 
 {
-tag :: a -> P (Tagged a)
-tag a = do
-    (Input (Posn _ l c) _ _ _) <- getInput
-    return (At a (Expr.Posn l c))
+-- token extractors
+
+tkPosn :: Token -> Expr.Posn
+tkPosn (TkVarId      (Posn _ l c) _) = Expr.Posn l c
+tkPosn (TkReservedId (Posn _ l c) _) = Expr.Posn l c
+tkPosn (TkReservedOp (Posn _ l c) _) = Expr.Posn l c
+tkPosn (TkPrimId     (Posn _ l c) _) = Expr.Posn l c
+tkPosn (TkConstant   (Posn _ l c) _) = Expr.Posn l c
+tkPosn (TkSpecial    (Posn _ l c) _) = Expr.Posn l c
+tkPosn (TkUnexpected (Posn _ l c) _) = Expr.Posn l c
+tkPosn TkEOF = Expr.Posn 0 0
+
+tkVar :: Token -> Var
+tkVar (TkVarId _ x) = x
+tkVar _ = undefined
+
+tkInt :: Token -> Int
+tkInt (TkConstant _ (CInt n)) = n
+tkInt _ = undefined
+
+tkBool :: Token -> Bool
+tkBool (TkConstant _ (CBool b)) = b
+tkBool _ = undefined
+
+-- happy
 
 happyParseError :: Token -> P a
-happyParseError tk = do
+happyParseError TkEOF = do
     (Input (Posn _ l c) _ _ _) <- getInput
-    errP (msg l c)
-    where 
-        msg l c = buildError Syntax l c (pprToken tk)
+    errP (buildError Syntax l c (pprToken TkEOF))
+happyParseError tk = do
+    let Expr.Posn l c = tkPosn tk
+    errP (buildError Syntax l c (pprToken tk))
 
 lexer :: (Token -> P a) -> P a
 lexer = \f -> scanToken >>= f
