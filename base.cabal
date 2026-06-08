@@ -66,21 +66,18 @@ library
         Base.Test
         Base.Type
         Base.Typechecker
-        Base.CBNa.Eval
-        Base.CBNa.Subst
-        Base.CBNa.Val
-        Base.CBNa.Text.Pretty
-        Base.CBNe.Eval
-        Base.CBNe.Subst
-        Base.CBNe.Val
-        Base.CBNe.Text.Pretty
+        Base.Val
+        Base.CBN.Eval
+        Base.CBN.Mem
+        Base.CBN.Text.Pretty
+        Base.CBNeed.Eval
+        Base.CBNeed.Mem
+        Base.CBNeed.Text.Pretty
         Base.CBR.Eval
-        Base.CBR.Subst
-        Base.CBR.Val
+        Base.CBR.Mem
         Base.CBR.Text.Pretty
         Base.CBV.Eval
-        Base.CBV.Subst
-        Base.CBV.Val
+        Base.CBV.Mem
         Base.CBV.Text.Pretty
         Base.Text.Monad
         Base.Text.Pretty
@@ -101,7 +98,8 @@ library
         containers    >=0.6.7    && <0.7.0,
         errata        >=0.4.0.3  && <0.5.0.0,
         prettyprinter >=1.7.2    && <1.8.0,
-        text          >=2.1.4    && <2.2.0
+        text          >=2.1.4    && <2.2.0,
+        transformers  >=0.6.3.0  && <0.7.0.0
 
     build-tool-depends:
         alex:alex     >=3.2.7.4  && <3.3.0.0,

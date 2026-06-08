@@ -8,16 +8,17 @@ import Base.Typechecker
 import Base.Text.Lex
 import Base.Text.Monad hiding (Posn)
 import Base.Text.Par
+import Base.Text.Pretty (pprEnv)
 
 import Data.Text (Text)
 import Prettyprinter (line)
 import Prettyprinter.Render.Text (putDoc)
 import System.Exit (exitFailure)
 
-import qualified Base.CBNa.Eval as CBNa
-import qualified Base.CBNa.Text.Pretty as CBNa
-import qualified Base.CBNe.Eval as CBNe
-import qualified Base.CBNe.Text.Pretty as CBNe
+import qualified Base.CBN.Eval as CBN
+import qualified Base.CBN.Text.Pretty as CBN
+import qualified Base.CBNeed.Eval as CBNeed
+import qualified Base.CBNeed.Text.Pretty as CBNeed
 import qualified Base.CBR.Eval as CBR
 import qualified Base.CBR.Text.Pretty  as CBR
 import qualified Base.CBV.Eval as CBV
@@ -62,9 +63,9 @@ cbvEvalTest f = do
         Left  e -> abort f (decode g) e
         Right p -> case checkP Map.empty p of
             Left  e -> abort f (decode g) e
-            Right _ -> case CBV.evalP Map.empty p of
+            Right _ -> case execute (CBV.evalP (Map.empty, Map.empty) p) of
                 Left  e -> abort f (decode g) e
-                Right r -> putDoc (CBV.pprEnv' r <> line)
+                Right (r,m) -> putDoc (pprEnv r (CBV.pprLoc' m) <> line)
 
 cbrEvalTest :: FilePath -> IO ()
 cbrEvalTest f = do
@@ -73,28 +74,28 @@ cbrEvalTest f = do
         Left  e -> abort f (decode g) e
         Right p -> case checkP Map.empty p of
             Left  e -> abort f (decode g) e
-            Right _ -> case CBR.evalP Map.empty p of
+            Right _ -> case execute (CBR.evalP (Map.empty, Map.empty) p) of
                 Left  e -> abort f (decode g) e
-                Right r -> putDoc (CBR.pprEnv' r <> line)
+                Right (r,m) -> putDoc (pprEnv r (CBR.pprLoc' m) <> line)
 
-cbnaEvalTest :: FilePath -> IO ()
-cbnaEvalTest f = do
+cbnEvalTest :: FilePath -> IO ()
+cbnEvalTest f = do
     g <- Byte.readFile f
     case runP g parseP of
         Left  e -> abort f (decode g) e
         Right p -> case checkP Map.empty p of
             Left  e -> abort f (decode g) e
-            Right _ -> case CBNa.evalP Map.empty p of
+            Right _ -> case execute (CBN.evalP (Map.empty, Map.empty) p) of
                 Left  e -> abort f (decode g) e
-                Right r -> putDoc (CBNa.pprEnv' r <> line)
+                Right (r,m) -> putDoc (pprEnv r (CBN.pprLoc' m) <> line)
 
-cbneEvalTest :: FilePath -> IO ()
-cbneEvalTest f = do
+cbneedEvalTest :: FilePath -> IO ()
+cbneedEvalTest f = do
     g <- Byte.readFile f
     case runP g parseP of
         Left  e -> abort f (decode g) e
         Right p -> case checkP Map.empty p of
             Left  e -> abort f (decode g) e
-            Right _ -> case CBNe.evalP Map.empty p of
+            Right _ -> case execute (CBNeed.evalP (Map.empty, Map.empty) p) of
                 Left  e -> abort f (decode g) e
-                Right r -> putDoc (CBNe.pprEnv' r <> line)
+                Right (r,m) -> putDoc (pprEnv r (CBNeed.pprLoc' m) <> line)

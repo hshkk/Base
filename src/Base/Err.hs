@@ -4,7 +4,10 @@ module Base.Err where
 import Base.Expr
 import Base.Type (Type)
 import Base.Text.Pretty
+import Base.Val (Loc)
 
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.State  (StateT (runStateT), get, put)
 import Data.ByteString.Lazy.Char8 (ByteString)
 import Data.Text (Text)
 import Data.Text.Encoding (decodeLatin1)
@@ -16,6 +19,25 @@ import qualified Data.Text as Text
 import qualified Data.Text.Lazy.IO as Text (putStrLn)
 
 type Err a = Either Error a
+type Eval mem a = StateT Loc (Either Error) a
+
+execute :: Eval mem a -> Err a
+execute c = fmap fst (runStateT c 0)
+
+fresh :: Eval mem Loc
+fresh = do
+    k <- get
+    put (succ k)
+    return (succ k)
+
+nfresh :: Int -> Eval mem [Loc]
+nfresh n = do
+    k <- get
+    put (k + n)
+    return (replicate n k)
+
+throw :: Error -> Eval mem a
+throw = lift . Left
 
 data ErrorType
     = Lexical

@@ -42,7 +42,3 @@ data Expr
     | Con Con
     | Bin Bin (Tagged Expr) (Tagged Expr)
     | Inv Var [Tagged Expr]
-
-data Val0
-    = VCon Con
-    | VUn

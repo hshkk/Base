@@ -1,8 +1,9 @@
 module Base.Bin where
 
-import Base.Expr (Bin(..), Con(..), Val0(VCon))
+import Base.Expr (Bin(..), Con(..))
+import Base.Val  (Val(..))
 
-bin :: Bin -> Val0 -> Val0 -> Val0
+bin :: Bin -> Val -> Val -> Val
 bin Add (VCon (I n)) (VCon (I m)) = VCon (I (n + m))
 bin Sub (VCon (I n)) (VCon (I m)) = VCon (I (n - m))
 bin Mul (VCon (I n)) (VCon (I m)) = VCon (I (n * m))

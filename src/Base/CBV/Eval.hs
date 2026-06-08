@@ -1,52 +1,58 @@
 module Base.CBV.Eval where
 
 import Base.Bin (bin)
-import Base.Dom (restrict, dom)
+import Base.Dom (restrict, ran)
 import Base.Err
 import Base.Expr
-import Base.CBV.Subst (subst, substs)
-import Base.CBV.Val   (Env, Val(..))
+import Base.Val
+import Base.CBV.Mem (Mem)
 
 import Control.Monad (mapM, foldM)
 
 import qualified Data.Map as Map
 
-evalP :: Env -> Prog -> Err Env
-evalP r ss = foldM evalS r ss
+type CBV a = Eval Mem a
 
-evalS :: Env -> Tagged Stmt -> Err Env
-evalS r (At (Decl x p) _) = Right (subst r (x, Val VUn))
-evalS r (At (x := e) _)   = do
-    (v, s) <- evalE r e
-    Right (subst s (x, v))
-evalS r (At (Proc f ps q) _) =
-    let xs = map fst ps in Right (subst r (f, VCls r xs q))
-evalS r (At (Prog p) _) = do
-    s <- evalP r p
-    Right (restrict s (dom r))
+evalP :: (Env,Mem) -> Prog -> CBV (Env,Mem)
+evalP (r,m) = foldM evalS (r,m)
 
-evalE :: Env -> Tagged Expr -> Err (Val, Env)
-evalE r (At (Var x) (Posn l c))
-    | Just v <- Map.lookup x r =
-        case v of
-            Val VUn -> Left (buildError (Eval UnassignedVariable) l c (decode x))
-            _       -> Right (v, r)
+evalS :: (Env,Mem) -> Tagged Stmt -> CBV (Env,Mem)
+evalS (r,m) (At (Decl x p) _) = do
+    k <- fresh
+    return (subst r (x,k), m)
+evalS (r,m) (At (x := e) _)   
+    | Just l <- Map.lookup x r = do
+        (v,n) <- evalE (r,m) e
+        return (r,subst n (l,v))
     | otherwise = undefined
-evalE r (At (Con c) _) = Right (Val (VCon c), r)
-evalE r (At (Bin op e1 e2) _) = do
-    (w1,r1) <- evalE r e1
-    (w2,r2) <- evalE r1 e2
-    case (w1,w2) of
-        (Val v1, Val v2) -> Right (Val (bin op v1 v2), r2)
-        _ -> undefined
-evalE r (At (Inv f es) _)
-    | Just (VCls s xs q) <- Map.lookup f r = do
-        vs    <- mapM (evalE r) es
-        (v,z) <- evalB (substs s (zip xs (map fst vs))) q
-        Right (v, substs r (Map.toList (restrict z (dom r))))
+evalS (r,m) (At (Proc f ps q) _) = do
+    let xs = map fst ps
+    k <- fresh
+    return (subst r (f,k), subst m (k, VCls r xs q))
+evalS (r,m) (At (Prog p) _) = do
+    (s,n) <- evalP (r,m) p
+    return (r, restrict n (ran r))
+
+evalE :: (Env,Mem) -> Tagged Expr -> CBV (Val,Mem)
+evalE (r,m) (At (Var x) (Posn l c))
+    | Just k <- Map.lookup x r 
+    , Just v <- Map.lookup k m = return (v,m)
+    | otherwise = throw (buildError (Eval UnassignedVariable) l c (decode x))
+evalE (r,m) (At (Con c) _) = return (VCon c, m)
+evalE (r,m0) (At (Bin op e1 e2) _) = do
+    (v1,m1) <- evalE (r,m0) e1
+    (v2,m2) <- evalE (r,m1) e2
+    return (bin op v1 v2, m2)
+evalE (r,m) (At (Inv f es) _)
+    | Just k <- Map.lookup f r 
+    , Just (VCls s xs q) <- Map.lookup k m = do
+        vs    <- mapM (evalE (r,m)) es
+        ks    <- nfresh (length es)
+        (v,n) <- evalB (substs s (zip xs ks), substs m (zip ks (map fst vs))) q
+        return (v, restrict n (ran r))
     | otherwise = undefined
 
-evalB :: Env -> Body -> Err (Val, Env)
-evalB r0 (Ret ss e) = do
-    rn <- foldM evalS r0 ss
-    evalE rn e
+evalB :: (Env,Mem) -> Body -> CBV (Val,Mem)
+evalB (r0,m0) (Ret ss e) = do
+    (rn,mn) <- foldM evalS (r0,m0) ss
+    evalE (rn,mn) e

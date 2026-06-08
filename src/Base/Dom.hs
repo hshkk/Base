@@ -1,7 +1,5 @@
 module Base.Dom where
 
-import Base.Expr
-
 import Data.Map  (Map)
 import Data.Set  (Set)
 
@@ -14,10 +12,5 @@ restrict = Map.restrictKeys
 dom :: Map k v -> Set k
 dom = Map.keysSet
 
-fv :: Tagged Expr -> Set Var
-fv (At (Var x) _) = Set.singleton x
-fv (At (Con _) _) = Set.empty
-fv (At (Bin _ e1 e2) _) = 
-    Set.union (fv e1) (fv e2)
-fv (At (Inv f es) _)    = 
-    Set.union (Set.singleton f) (Set.unions (map fv es))
+ran :: Ord v => Map k v -> Set v
+ran = Set.fromList . Map.elems

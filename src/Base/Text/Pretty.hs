@@ -2,14 +2,16 @@
 module Base.Text.Pretty where
 
 import Base.Expr
-import Base.Type
+import Base.Type (Type(..))
+import Base.Val  (Val(..), Env, Loc)
 
 import Data.ByteString.Lazy.Char8 (ByteString)
-import Data.Text (Text)
+import Data.Text   (Text)
 import Prettyprinter
 import Prettyprinter.Render.Text (renderStrict)
 
 import qualified Data.ByteString.Lazy.Char8 as Byte (unpack)
+import qualified Data.Map    as Map
 
 unpack :: ByteString -> Doc ann
 unpack = pretty . Byte.unpack
@@ -64,9 +66,24 @@ pprBin Mul = "*"
 pprBin Or  = "||"
 pprBin And = "&&"
 
-pprVal0 :: Val0 -> Doc ann
-pprVal0 (VCon c) = pprCon c
-pprVal0 VUn      = "?"
+pprVal :: (Loc -> Doc ann) -> Val -> Doc ann
+pprVal _ (VCon c)      = pprCon c
+pprVal k (VCls r xs q) = pprCls r k xs q
+
+pprVal' :: (Loc -> Doc ann) -> Val -> Doc ann
+pprVal' _ (VCon c) = pprCon c
+pprVal' _ _        = parens ""
+
+pprCls :: Env -> (Loc -> Doc ann) -> [Var] -> Body -> Doc ann
+pprCls r k xs q =
+    parens (pprEnv r k <> comma <+> parens ((hsep . punctuate comma . map unpack) xs) <> pprBody q)
+
+pprEnv :: Env -> (Loc -> Doc ann) -> Doc ann
+pprEnv r k
+    | Map.null r = brackets ""
+    | otherwise  =
+        brackets (nest 3 (indent 3 ((vsep . punctuate comma . map pprBind) (Map.toList r))) <> line)
+    where pprBind (x, l) = unpack x <+> "=" <+> k l
 
 pprType :: Type -> Doc ann
 pprType (TPrim p)    = pprPrim p
