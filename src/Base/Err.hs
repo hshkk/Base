@@ -30,11 +30,11 @@ fresh = do
     put (succ k)
     return (succ k)
 
-nfresh :: Int -> Eval mem [Loc]
-nfresh n = do
+freshK :: Int -> Eval mem [Loc]
+freshK n = do
     k <- get
-    put (k + n)
-    return (replicate n k)
+    put (succ (k+n))
+    return (map succ [k..k+n])
 
 throw :: Error -> Eval mem a
 throw = lift . Left
@@ -87,7 +87,7 @@ packageError f (Error t l c u) =
         Nothing
         (blockSimple errorStyle basicPointer f
             (Just ("error: " <> packageErrorType t))
-            (l, c, c, Nothing)
+            (l, c, succ c, Just "here!")
             (packageErrorMsg t))
         Nothing
     where 
@@ -117,7 +117,7 @@ packageError f (Error t l c u) =
             = Just ("Parameter " <> Text.show n <> " of '" <> f <> "' has type '" <> render (pprType a) 
                                  <> "', but I received an argument of type '" <> u <> "'.")
         packageErrorMsg (Eval UnassignedVariable)
-            = Just ("'" <> u <> "' was declared as a variable, but it was never assigned to an expression.")
+            = Just ("'" <> u <> "' was declared as a variable, but it was never assigned to anything.")
         packageErrorMsg (Eval NonvariableArguments)
             = Just ("I received a non-variable argument to '" <> u <> "', but cbr-Base requires all procedure arguments to be variables.")
         

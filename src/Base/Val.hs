@@ -4,7 +4,7 @@ import Base.Expr
 
 import Data.Map (Map)
 
-import qualified Data.Map as Map (insert, union, fromList)
+import qualified Data.Map as Map (insert)
 
 type Loc = Int
 
@@ -18,4 +18,5 @@ subst :: Ord k => Map k v -> (k,v) -> Map k v
 subst m (k,v) = Map.insert k v m
 
 substs :: Ord k => Map k v -> [(k,v)] -> Map k v
-substs m kvs = Map.union m (Map.fromList kvs)
+substs r []         = r
+substs r ((x,v):ws) = substs (subst r (x,v)) ws

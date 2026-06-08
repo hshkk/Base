@@ -1,7 +1,7 @@
 module Base.CBR.Eval where
 
 import Base.Bin (bin)
-import Base.Dom (restrict, ran)
+import Base.Dom (restrict, ran, dom)
 import Base.Err
 import Base.Expr
 import Base.Val
@@ -51,7 +51,7 @@ evalE (r,m) (At (Inv f es) (Posn l c))
             Just xs -> do
                 let ks = mapMaybe (\k -> Map.lookup k r) xs
                 (v,n) <- evalB (substs s (zip ys ks), m) q
-                return (v, restrict n (ran r))
+                return (v, restrict n (dom m))
             Nothing -> throw (buildError (Eval NonvariableArguments) l c (decode f))
     | otherwise = undefined
 

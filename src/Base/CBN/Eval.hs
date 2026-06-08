@@ -1,7 +1,7 @@
 module Base.CBN.Eval where
 
 import Base.Bin (bin)
-import Base.Dom (restrict, ran)
+import Base.Dom (restrict, ran, dom)
 import Base.Err
 import Base.Expr
 import Base.Val
@@ -50,9 +50,9 @@ evalE (r,m0) (At (Bin op e1 e2) _) = do
 evalE (r,m) (At (Inv f es) _)
     | Just k <- Map.lookup f r 
     , Just (Eq (VCls s xs q)) <- Map.lookup k m = do
-        ks    <- nfresh (length es)
+        ks    <- freshK (length es)
         (v,n) <- evalB (substs s (zip xs ks), substs m (zip ks (map (Thunk r) es))) q
-        return (v, restrict n (ran r))
+        return (v, restrict n (dom m))
     | otherwise = undefined
 
 evalB :: (Env,Mem) -> Body -> CBN (Val,Mem)
