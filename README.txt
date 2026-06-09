@@ -62,7 +62,7 @@ cbv-Base, cbr-Base:
 Mem   μ   ::=  •                         (empty memory store)
            |   μ, l=v                    (extend with "l is v")
 
-³ In the evaluation rule for procedure invocation, cbv-Base copies the argument values into fresh locations, then points all parameter names to those locations. cbr-Base instead points all parameter names to the same locations pointed to by the argument names; any change to a parameter becomes a change to the corresponding argument.
+³ In the evaluation rule for procedure invocation, cbv-Base copies the argument values into fresh locations, then points all parameter names to those locations. cbr-Base instead points all parameter names to the same locations pointed to by the argument names; any change to a parameter becomes a change to the corresponding argument. This indirection is why there exists a stipulation that all arguments to procedures be variables in cbr-Base.
 
 cbn-Base, cbneed-Base:
 
@@ -70,6 +70,6 @@ Mem   μ   ::=  •                         (empty memory store)
            |   μ, l=v                    (extend with "l is v")
            |   μ, l=(𝜌,e)                (extend with "l is (𝜌,e)")
 
-⁴ The evaluation rule for procedure invocation is the same between cbn- and cbneed-Base. Each argument is packaged into a thunk placed into fresh locations, then all parameter names are pointed to those locations. In fact, the only difference between the two systems is whether the result of a forced thunk is memoized (i.e., updated in the memory store).
+⁴ The evaluation rule for procedure invocation is the same between cbn- and cbneed-Base. Each argument is first packaged into a thunk. Then, it is placed into a fresh location to be pointed to by the corresponding parameter name. The only difference between the two systems is whether the result of a forced thunk is memoized (i.e., updated in the memory store).
 
 ----
