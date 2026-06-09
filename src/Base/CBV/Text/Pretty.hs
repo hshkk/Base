@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Base.CBV.Text.Pretty where
 
-import Base.Val
 import Base.CBV.Mem
+import Base.Data.Val
 
 import Prettyprinter
 

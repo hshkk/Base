@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Base.CBN.Text.Pretty where
 
-import Base.Expr
-import Base.Val
 import Base.CBN.Mem
+import Base.Data.Expr
+import Base.Data.Val
 
 import Prettyprinter
 

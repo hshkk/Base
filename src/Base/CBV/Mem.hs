@@ -1,6 +1,6 @@
 module Base.CBV.Mem where
 
-import Base.Val (Loc, Val)
+import Base.Data.Val (Loc, Val)
 
 import Data.Map (Map)
 

@@ -1,7 +1,7 @@
 module Base.CBN.Mem where
 
-import Base.Expr (Expr, Tagged)
-import Base.Val  (Loc, Val, Env)
+import Base.Data.Expr (Expr, Tagged)
+import Base.Data.Val  (Loc, Val, Env)
 
 import Data.Map (Map)
 

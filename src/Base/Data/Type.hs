@@ -1,6 +1,6 @@
-module Base.Type where
+module Base.Data.Type where
 
-import Base.Expr (Var, Prim)
+import Base.Data.Expr (Var, Prim)
 
 import Data.Map  (Map)
 

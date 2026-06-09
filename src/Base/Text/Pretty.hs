@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Base.Text.Pretty where
 
-import Base.Expr
-import Base.Type (Type(..))
-import Base.Val  (Val(..), Env, Loc)
+import Base.Data.Expr
+import Base.Data.Type (Type(..))
+import Base.Data.Val  (Val(..), Env, Loc)
 
 import Data.ByteString.Lazy.Char8 (ByteString)
 import Data.Text   (Text)

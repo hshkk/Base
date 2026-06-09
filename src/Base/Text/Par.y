@@ -2,12 +2,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Base.Text.Par where
 
-import Base.Expr hiding (Posn)
-import Base.Eval.Err
+import Base.Control.Err
+import Base.Data.Expr hiding (Posn)
 import Base.Text.Lex
 import Base.Text.Monad
 
-import qualified Base.Expr as Expr (Posn(..))
+import qualified Base.Data.Expr as Expr (Posn(..))
 }
 
 %expect 0

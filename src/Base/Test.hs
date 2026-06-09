@@ -1,11 +1,10 @@
 module Base.Test where
 
-import Base.Expr
-import Base.Type
-import Base.Typechecker
-
-import Base.Eval.Err  hiding (line)
-
+import Base.Control.Err hiding (line)
+import Base.Data.Expr
+import Base.Data.Type
+import Base.Eval.Monad (execute)
+import Base.Eval.Typechecker (checkP)
 import Base.Text.Lex
 import Base.Text.Monad hiding (Posn)
 import Base.Text.Par

@@ -1,7 +1,7 @@
 module Base.Eval.Bin where
 
-import Base.Expr (Bin(..), Con(..))
-import Base.Val  (Val(..))
+import Base.Data.Expr (Bin(..), Con(..))
+import Base.Data.Val  (Val(..))
 
 bin :: Bin -> Val -> Val -> Val
 bin Add (VCon (I n)) (VCon (I m)) = VCon (I (n + m))

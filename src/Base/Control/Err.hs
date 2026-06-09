@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Base.Eval.Err where
+module Base.Control.Err where
 
-import Base.Expr
-import Base.Type (Type)
+import Base.Data.Expr
+import Base.Data.Type (Type)
 import Base.Text.Pretty
 
 import Data.ByteString.Lazy.Char8 (ByteString)

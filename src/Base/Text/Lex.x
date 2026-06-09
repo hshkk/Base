@@ -2,8 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Base.Text.Lex where
 
-import Base.Expr (Var)
-import Base.Eval.Err
+import Base.Control.Err
+import Base.Data.Expr (Var)
 import Base.Text.Monad
 
 import Control.Monad (liftM)

@@ -1,4 +1,4 @@
-module Base.Expr where
+module Base.Data.Expr where
 
 import Data.ByteString.Lazy.Char8 (ByteString)
 
