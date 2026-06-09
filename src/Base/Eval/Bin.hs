@@ -1,4 +1,4 @@
-module Base.Bin where
+module Base.Eval.Bin where
 
 import Base.Expr (Bin(..), Con(..))
 import Base.Val  (Val(..))

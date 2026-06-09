@@ -1,9 +1,10 @@
 module Base.Test where
 
-import Base.Err  hiding (line)
 import Base.Expr
 import Base.Type
 import Base.Typechecker
+
+import Base.Eval.Err  hiding (line)
 
 import Base.Text.Lex
 import Base.Text.Monad hiding (Posn)

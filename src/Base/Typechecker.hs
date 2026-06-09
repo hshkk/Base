@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Base.Typechecker where
 
-import Base.Err
 import Base.Expr
 import Base.Type
+import Base.Eval.Err
 import Base.Text.Pretty
 
 import Control.Monad  (foldM)

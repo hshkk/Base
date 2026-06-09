@@ -1,6 +1,6 @@
 module Base.Text.Monad where
 
-import Base.Err
+import Base.Eval.Err (Error, Err)
 
 import Data.ByteString.Lazy.Char8 (ByteString)
 import Data.Int  (Int64)

@@ -59,9 +59,6 @@ library
 
     -- Modules exported by the library.
     exposed-modules:  
-        Base.Bin
-        Base.Dom
-        Base.Err
         Base.Expr
         Base.Test
         Base.Type
@@ -79,6 +76,10 @@ library
         Base.CBV.Eval
         Base.CBV.Mem
         Base.CBV.Text.Pretty
+        Base.Eval.Bin
+        Base.Eval.Dom
+        Base.Eval.Err
+        Base.Eval.Monad
         Base.Text.Monad
         Base.Text.Pretty
 

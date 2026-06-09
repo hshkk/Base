@@ -1,4 +1,4 @@
-module Base.Dom where
+module Base.Eval.Dom where
 
 import Data.Map  (Map)
 import Data.Set  (Set)

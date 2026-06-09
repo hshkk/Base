@@ -1,13 +1,14 @@
 module Base.CBV.Eval where
 
-import Base.Bin (bin)
-import Base.Dom (restrict, ran, dom)
-import Base.Err
 import Base.Expr
 import Base.Val
 import Base.CBV.Mem (Mem)
+import Base.Eval.Bin (bin)
+import Base.Eval.Dom (restrict, ran, dom)
+import Base.Eval.Err
+import Base.Eval.Monad
 
-import Control.Monad (mapM, foldM)
+import Control.Monad (foldM)
 
 import qualified Data.Map as Map
 
@@ -17,7 +18,7 @@ evalP :: (Env,Mem) -> Prog -> CBV (Env,Mem)
 evalP (r,m) = foldM evalS (r,m)
 
 evalS :: (Env,Mem) -> Tagged Stmt -> CBV (Env,Mem)
-evalS (r,m) (At (Decl x p) _) = do
+evalS (r,m) (At (Decl x _) _) = do
     k <- fresh
     return (subst r (x,k), m)
 evalS (r,m) (At (x := e) _)   
@@ -30,7 +31,7 @@ evalS (r,m) (At (Proc f ps q) _) = do
     k <- fresh
     return (subst r (f,k), subst m (k, VCls r xs q))
 evalS (r,m) (At (Prog p) _) = do
-    (s,n) <- evalP (r,m) p
+    (_,n) <- evalP (r,m) p
     return (r, restrict n (ran r))
 
 evalE :: (Env,Mem) -> Tagged Expr -> CBV (Val,Mem)
@@ -38,7 +39,7 @@ evalE (r,m) (At (Var x) (Posn l c))
     | Just k <- Map.lookup x r 
     , Just v <- Map.lookup k m = return (v,m)
     | otherwise = throw (buildError (Eval UnassignedVariable) l c (decode x))
-evalE (r,m) (At (Con c) _) = return (VCon c, m)
+evalE (_,m) (At (Con c) _) = return (VCon c, m)
 evalE (r,m0) (At (Bin op e1 e2) _) = do
     (v1,m1) <- evalE (r,m0) e1
     (v2,m2) <- evalE (r,m1) e2

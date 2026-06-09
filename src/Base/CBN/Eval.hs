@@ -1,11 +1,12 @@
 module Base.CBN.Eval where
 
-import Base.Bin (bin)
-import Base.Dom (restrict, ran, dom)
-import Base.Err
 import Base.Expr
 import Base.Val
 import Base.CBN.Mem
+import Base.Eval.Bin (bin)
+import Base.Eval.Dom (restrict, ran, dom)
+import Base.Eval.Err
+import Base.Eval.Monad
 
 import Control.Monad (foldM)
 
