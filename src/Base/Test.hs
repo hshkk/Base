@@ -30,7 +30,7 @@ import qualified Data.Map as Map
 abort :: FilePath -> Text -> Error -> IO a
 abort f src e = do
     printError f src e
-    exitFailure
+    _ <- exitFailure
     return undefined
 
 alexLexTest :: FilePath -> IO [Token]
@@ -54,7 +54,7 @@ typecheckTest f = do
         Left  e -> abort f (decode g) e
         Right p -> case checkP Map.empty p of
             Left  e -> abort f (decode g) e
-            Right g -> return g
+            Right h -> return h
 
 cbvEvalTest :: FilePath -> IO ()
 cbvEvalTest f = do

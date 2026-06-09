@@ -29,15 +29,15 @@ checkS g (At (Proc f ps q) _) = do
     a <- checkB (Map.union g (Map.fromList (map (second TPrim) ps))) q
     Right (Map.insert f (TProc (map (TPrim . snd) ps) a) g)
 checkS g (At (Prog p) _) = do
-    d <- checkP g p
+    _ <- checkP g p
     Right g
 
 checkE :: TEnv -> Tagged Expr -> Err Type
 checkE g (At (Var x) (Posn l c))
     | Just a <- Map.lookup x g = Right a
     | otherwise = Left (buildError (Type UndeclaredVariable) l c (decode x))
-checkE g (At (Con (I _)) _) = Right (TPrim Int)
-checkE g (At (Con (B _)) _) = Right (TPrim Bool)
+checkE _ (At (Con (I _)) _) = Right (TPrim Int)
+checkE _ (At (Con (B _)) _) = Right (TPrim Bool)
 checkE g (At (Bin Add e1 e2) _) = do
     a1 <- checkE g e1
     a2 <- checkE g e2
@@ -98,9 +98,11 @@ checkE g (At (Inv f es) (Posn l c))
         cs <- mapM (checkE g) es
         if as == cs then Right b
         else 
-            let fstMatch xs = find (\(x, (y, _, _)) -> x /= y) xs
-                Just (a, (c, At _ (Posn li ci), n)) = fstMatch (zip as (zip3 cs es [1..])) in
-            Left (buildError (Type (MismatchedArguments n a (decode f))) li ci (render (pprType c)))
+            let fstMatch xs = find (\(x, (y, _, _)) -> x /= y) xs in
+            case fstMatch (zip as (zip3 cs es [1..])) of
+                Just (a, (d, At _ (Posn li ci), n)) -> 
+                    Left (buildError (Type (MismatchedArguments n a (decode f))) li ci (render (pprType d)))
+                _ -> undefined
     | otherwise = Left (buildError (Type UndeclaredProcedure) l c (decode f))
 
 checkB :: TEnv -> Body -> Err Type

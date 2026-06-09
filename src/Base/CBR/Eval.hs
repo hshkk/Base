@@ -7,7 +7,7 @@ import Base.Expr
 import Base.Val
 import Base.CBR.Mem (Mem)
 
-import Control.Monad (mapM, foldM)
+import Control.Monad (foldM)
 
 import qualified Data.Map as Map
 import Data.Maybe (mapMaybe)
@@ -18,7 +18,7 @@ evalP :: (Env,Mem) -> Prog -> CBR (Env,Mem)
 evalP (r,m) = foldM evalS (r,m)
 
 evalS :: (Env,Mem) -> Tagged Stmt -> CBR (Env,Mem)
-evalS (r,m) (At (Decl x p) _) = do
+evalS (r,m) (At (Decl x _) _) = do
     k <- fresh
     return (subst r (x,k), m)
 evalS (r,m) (At (x := e) _)   
@@ -31,7 +31,7 @@ evalS (r,m) (At (Proc f ps q) _) = do
     k <- fresh
     return (subst r (f,k), subst m (k, VCls r xs q))
 evalS (r,m) (At (Prog p) _) = do
-    (s,n) <- evalP (r,m) p
+    (_,n) <- evalP (r,m) p
     return (r, restrict n (ran r))
 
 evalE :: (Env,Mem) -> Tagged Expr -> CBR (Val,Mem)
@@ -39,7 +39,7 @@ evalE (r,m) (At (Var x) (Posn l c))
     | Just k <- Map.lookup x r 
     , Just v <- Map.lookup k m = return (v,m)
     | otherwise = throw (buildError (Eval UnassignedVariable) l c (decode x))
-evalE (r,m) (At (Con c) _) = return (VCon c, m)
+evalE (_,m) (At (Con c) _) = return (VCon c, m)
 evalE (r,m0) (At (Bin op e1 e2) _) = do
     (v1,m1) <- evalE (r,m0) e1
     (v2,m2) <- evalE (r,m1) e2
@@ -49,7 +49,7 @@ evalE (r,m) (At (Inv f es) (Posn l c))
     , Just (VCls s ys q) <- Map.lookup k m = 
         case mapM (\(At e _) -> case e of {Var y -> Just y; _ -> Nothing}) es of
             Just xs -> do
-                let ks = mapMaybe (\k -> Map.lookup k r) xs
+                let ks = mapMaybe (\j -> Map.lookup j r) xs
                 (v,n) <- evalB (substs s (zip ys ks), m) q
                 return (v, restrict n (dom m))
             Nothing -> throw (buildError (Eval NonvariableArguments) l c (decode f))

@@ -113,8 +113,8 @@ packageError f (Error t l c u) =
                 packageBin Mul = "(Int, Int) -> Int"
                 packageBin Or  = "(Bool, Bool) -> Bool"
                 packageBin And = "(Bool, Bool) -> Bool"
-        packageErrorMsg  (Type (MismatchedArguments n a f))
-            = Just ("Parameter " <> Text.show n <> " of '" <> f <> "' has type '" <> render (pprType a) 
+        packageErrorMsg  (Type (MismatchedArguments n a g))
+            = Just ("Parameter " <> Text.show n <> " of '" <> g <> "' has type '" <> render (pprType a) 
                                  <> "', but I received an argument of type '" <> u <> "'.")
         packageErrorMsg (Eval UnassignedVariable)
             = Just ("'" <> u <> "' was declared as a variable, but it was never assigned to anything.")

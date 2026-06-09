@@ -105,7 +105,7 @@ pprToken (TkReservedOp _ ro) = case ro of
     ROTimes           -> "*"
     RODoublePipe      -> "||"
     RODoubleAmpersand -> "&&"
-pprToken (TkPrimId _ pi) = case pi of
+pprToken (TkPrimId _ p) = case p of
     PIInt  -> "Int"
     PIBool -> "Bool"
 pprToken (TkConstant _ (CInt  n)) = Text.pack (show n)
