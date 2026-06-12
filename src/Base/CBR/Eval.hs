@@ -52,7 +52,7 @@ evalE (r,m) (At (Inv f es) (Posn l c))
             Just xs -> do
                 let ks = mapMaybe (\j -> Map.lookup j r) xs
                 (v,n) <- evalB (substs s (zip ys ks), m) q
-                return (v, restrict n (dom m))
+                return (v, n)
             Nothing -> throw (buildError (Eval NonvariableArguments) l c (decode f))
     | otherwise = undefined
 
