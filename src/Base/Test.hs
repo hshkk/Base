@@ -3,26 +3,30 @@ module Base.Test where
 import Base.Control.Err hiding (line)
 import Base.Data.Expr
 import Base.Data.Type
-import Base.Eval.Monad (execute)
+import Base.Data.Val
+import Base.Eval.Monad (Eval, execute)
 import Base.Eval.Typechecker (checkP)
 import Base.Text.Lex
 import Base.Text.Monad hiding (Posn)
 import Base.Text.Par
 import Base.Text.Pretty (pprEnv)
 
-import Data.Text (Text)
-import Prettyprinter (line)
+import Data.Text     (Text)
+import Prettyprinter (Doc, line)
 import Prettyprinter.Render.Text (putDoc)
-import System.Exit (exitFailure)
+import System.Exit   (exitFailure)
 
-import qualified Base.CBN.Eval as CBN
-import qualified Base.CBN.Text.Pretty as CBN
-import qualified Base.CBNeed.Eval as CBNeed
+import qualified Base.CBN.Eval           as CBN
+import qualified Base.CBN.Text.Pretty    as CBN
+import qualified Base.CBNeed.Eval        as CBNeed
 import qualified Base.CBNeed.Text.Pretty as CBNeed
-import qualified Base.CBR.Eval as CBR
-import qualified Base.CBR.Text.Pretty  as CBR
-import qualified Base.CBV.Eval as CBV
-import qualified Base.CBV.Text.Pretty  as CBV
+import qualified Base.CBR.Eval           as CBR
+import qualified Base.CBR.Text.Pretty    as CBR
+import qualified Base.CBV.Eval           as CBV
+import qualified Base.CBV.Text.Pretty    as CBV
+
+import Data.ByteString.Lazy.Char8 (ByteString)
+import Data.Map (Map)
 
 import qualified Data.ByteString.Lazy.Char8 as Byte (readFile)
 import qualified Data.Map as Map
@@ -33,69 +37,40 @@ abort f src e = do
     _ <- exitFailure
     return undefined
 
-alexLexTest :: FilePath -> IO [Token]
-alexLexTest f = do
+testWith :: (ByteString -> Either Error a) -> FilePath -> IO a
+testWith p f = do
     g <- Byte.readFile f
-    case runP g scanTokens of
-        Left  e   -> abort f (decode g) e
-        Right tks -> return tks
+    either (abort f (decode g)) return (p g)
+
+alexLexTest :: FilePath -> IO [Token]
+alexLexTest = testWith (\g -> runP g scanTokens)
 
 happyParseTest :: FilePath -> IO Prog
-happyParseTest f = do
-    g <- Byte.readFile f
-    case runP g parseP of
-        Left  e -> abort f (decode g) e
-        Right p -> return p
+happyParseTest = testWith (\g -> runP g parseP)
 
 typecheckTest :: FilePath -> IO TEnv
-typecheckTest f = do
-    g <- Byte.readFile f
-    case runP g parseP of
-        Left  e -> abort f (decode g) e
-        Right p -> case checkP Map.empty p of
-            Left  e -> abort f (decode g) e
-            Right h -> return h
+typecheckTest = testWith (\g -> runP g parseP >>= checkP Map.empty)
+
+evalTest :: ((Env, Map Loc val) -> Prog -> Eval (Map Loc val) (Env, Map Loc val)) 
+                                            -- ^ evaluation
+         -> (Map Loc val -> Loc -> Doc ann) -- < prettyprinting locations
+         -> FilePath
+         -> IO ()
+evalTest eval ppr f = do
+    (r,m) <- testWith (\g -> do
+        p <- runP g parseP
+        _ <- checkP Map.empty p
+        execute (eval (Map.empty, Map.empty) p)) f
+    putDoc (pprEnv r (ppr m) <> line)
 
 cbvEvalTest :: FilePath -> IO ()
-cbvEvalTest f = do
-    g <- Byte.readFile f
-    case runP g parseP of
-        Left  e -> abort f (decode g) e
-        Right p -> case checkP Map.empty p of
-            Left  e -> abort f (decode g) e
-            Right _ -> case execute (CBV.evalP (Map.empty, Map.empty) p) of
-                Left  e -> abort f (decode g) e
-                Right (r,m) -> putDoc (pprEnv r (CBV.pprLoc' m) <> line)
+cbvEvalTest = evalTest CBV.evalP CBV.pprLoc'
 
 cbrEvalTest :: FilePath -> IO ()
-cbrEvalTest f = do
-    g <- Byte.readFile f
-    case runP g parseP of
-        Left  e -> abort f (decode g) e
-        Right p -> case checkP Map.empty p of
-            Left  e -> abort f (decode g) e
-            Right _ -> case execute (CBR.evalP (Map.empty, Map.empty) p) of
-                Left  e -> abort f (decode g) e
-                Right (r,m) -> putDoc (pprEnv r (CBR.pprLoc' m) <> line)
+cbrEvalTest = evalTest CBR.evalP CBR.pprLoc'
 
 cbnEvalTest :: FilePath -> IO ()
-cbnEvalTest f = do
-    g <- Byte.readFile f
-    case runP g parseP of
-        Left  e -> abort f (decode g) e
-        Right p -> case checkP Map.empty p of
-            Left  e -> abort f (decode g) e
-            Right _ -> case execute (CBN.evalP (Map.empty, Map.empty) p) of
-                Left  e -> abort f (decode g) e
-                Right (r,m) -> putDoc (pprEnv r (CBN.pprLoc' m) <> line)
+cbnEvalTest = evalTest CBN.evalP CBN.pprLoc'
 
-cbneedEvalTest :: FilePath -> IO ()
-cbneedEvalTest f = do
-    g <- Byte.readFile f
-    case runP g parseP of
-        Left  e -> abort f (decode g) e
-        Right p -> case checkP Map.empty p of
-            Left  e -> abort f (decode g) e
-            Right _ -> case execute (CBNeed.evalP (Map.empty, Map.empty) p) of
-                Left  e -> abort f (decode g) e
-                Right (r,m) -> putDoc (pprEnv r (CBNeed.pprLoc' m) <> line)
+cbNeedEvalTest :: FilePath -> IO ()
+cbNeedEvalTest = evalTest CBNeed.evalP CBNeed.pprLoc'
