@@ -14,10 +14,10 @@ import qualified Data.Map as Map
 
 type CBV a = Eval Mem a
 
-evalP :: (Env,Mem) -> Prog -> CBV (Env,Mem)
+evalP :: (Env, Mem) -> Prog -> CBV (Env, Mem)
 evalP (r,m) = foldM evalS (r,m)
 
-evalS :: (Env,Mem) -> Tagged Stmt -> CBV (Env,Mem)
+evalS :: (Env, Mem) -> Tagged Stmt -> CBV (Env, Mem)
 evalS (r,m) (At (Decl x _) _) = do
     k <- fresh
     return (subst r (x,k), m)
@@ -34,7 +34,7 @@ evalS (r,m) (At (Prog p) _) = do
     (_,n) <- evalP (r,m) p
     return (r, restrict n (ran r))
 
-evalE :: (Env,Mem) -> Tagged Expr -> CBV (Val,Mem)
+evalE :: (Env, Mem) -> Tagged Expr -> CBV (Val, Mem)
 evalE (r,m) (At (Var x) (Posn l c))
     | Just k <- Map.lookup x r 
     , Just v <- Map.lookup k m = return (v,m)
@@ -53,7 +53,7 @@ evalE (r,m) (At (Inv f es) _)
         return (v, restrict n (dom m))
     | otherwise = undefined
 
-evalB :: (Env,Mem) -> Body -> CBV (Val,Mem)
+evalB :: (Env, Mem) -> Body -> CBV (Val, Mem)
 evalB (r0,m0) (Ret ss e) = do
     (rn,mn) <- foldM evalS (r0,m0) ss
     evalE (rn,mn) e

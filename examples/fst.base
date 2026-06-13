@@ -1,20 +1,18 @@
-{   a : Int = 5;
-    b : Int = 10;
+{   a : Int;
+    b : Int = 5;
     {   proc f(x : Int, y : Int) {
             z : Int = x;
             return z + y;
         };
-        c : Int = f(a, b);
-        b = b + c;
+        a = f(1, b);
     };
-    c : Bool;
     {   proc g(x : Bool, y : Bool) {
             x = x && y;
             proc h(z : Bool){
-                return z;
+                a = 10 * 2;
+                return z && y;
             };
             return h(x);
         };
-        c = True && g(True, False);
     };
 }
