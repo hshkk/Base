@@ -15,6 +15,9 @@ import qualified Data.ByteString.Lazy.Char8 as Byte (toStrict)
 import qualified Data.Text as Text 
 import qualified Data.Text.Lazy.IO as Text (putStrLn)
 
+decode :: ByteString -> Text
+decode = decodeLatin1 . Byte.toStrict
+
 type Err a = Either Error a
 
 data ErrorType
@@ -38,18 +41,18 @@ data EvalError
     deriving Eq
 
 data Error = Error { 
-    errorType  :: ErrorType,
-    line       :: Int, 
-    col        :: Int, 
+    ty   :: ErrorType,
+    line :: Int, 
+    col  :: Int, 
     unexpected :: Text
     }
     deriving Eq
 
 buildError :: ErrorType -> Int -> Int -> Text -> Error
 buildError t l c u = Error {
-    errorType = t,
+    ty   = t,
     line = l, 
-    col = c, 
+    col  = c, 
     unexpected = u
     }
 
@@ -101,6 +104,3 @@ packageError f (Error t l c u) =
         
 printError :: FilePath -> Text -> Error -> IO ()
 printError f src e = Text.putStrLn (prettyErrors src [packageError f e])
-
-decode :: ByteString -> Text
-decode = decodeLatin1 . Byte.toStrict

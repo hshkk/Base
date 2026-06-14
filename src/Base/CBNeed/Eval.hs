@@ -12,12 +12,12 @@ import Control.Monad (foldM)
 
 import qualified Data.Map as Map
 
-type CBN a = Eval Mem a
+type CBNeed a = Eval Mem a
 
-evalP :: (Env, Mem) -> Prog -> CBN (Env, Mem)
+evalP :: (Env, Mem) -> Prog -> CBNeed (Env, Mem)
 evalP (r,m) = foldM evalS (r,m)
 
-evalS :: (Env, Mem) -> Tagged Stmt -> CBN (Env, Mem)
+evalS :: (Env, Mem) -> Tagged Stmt -> CBNeed (Env, Mem)
 evalS (r,m) (At (Decl x _) _) = do
     k <- fresh
     return (subst r (x,k), m)
@@ -34,7 +34,7 @@ evalS (r,m) (At (Prog p) _) = do
     (_,n) <- evalP (r,m) p
     return (r, restrict n (ran r))
 
-evalE :: (Env, Mem) -> Tagged Expr -> CBN (Val, Mem)
+evalE :: (Env, Mem) -> Tagged Expr -> CBNeed (Val, Mem)
 evalE (r,m) (At (Var x) (Posn l c))
     | Just k <- Map.lookup x r 
     , Just b <- Map.lookup k m = case b of
@@ -56,7 +56,7 @@ evalE (r,m) (At (Inv f es) _)
         return (v, restrict n (dom m))
     | otherwise = undefined
 
-evalB :: (Env, Mem) -> Body -> CBN (Val, Mem)
+evalB :: (Env, Mem) -> Body -> CBNeed (Val, Mem)
 evalB (r0,m0) (Ret ss e) = do
     (rn,mn) <- foldM evalS (r0,m0) ss
     evalE (rn,mn) e
