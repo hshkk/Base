@@ -1,8 +1,8 @@
 Base is a small imperative language with static typing and CBV/R/N/Need variants.
   • cbv-Base    (call-by-value)
   • cbr-Base    (call-by-reference; procedure arguments are restricted to variables)
-  • cbna-Base   (call-by-name)
-  • cbne-Base   (call-by-need)
+  • cbn-Base    (call-by-name)
+  • cbNeed-Base (call-by-need)
 If the restriction on cbr-Base is respected, the same program file will generally execute without errors under all four variants.
 
 Base is very much limited in what it can achieve in computation. For one, it lacks loops, recursion, or user-defined datatypes. It is rather meant to serve as a minimal, distraction-less environment in which one can play around with different parameter passing strategies.
@@ -55,7 +55,7 @@ Env   𝜌   ::=  •                         (empty environment)
 
 ----
 
-Memory stores, which generally map locations to values, are more variant-specific. In particular, cbn- and cbneed-Base also map locations to thunks, which are pairs of environments and expressions.
+Memory stores, which generally map locations to values, are more variant-specific. In particular, cbn- and cbNeed-Base also map locations to thunks, which are pairs of environments and expressions.
 
 cbv-Base, cbr-Base:
 
@@ -64,12 +64,12 @@ Mem   μ   ::=  •                         (empty memory store)
 
 ³ In the evaluation rule for procedure invocation, cbv-Base copies the argument values into fresh locations, then points all parameter names to those locations. cbr-Base instead points all parameter names to the same locations pointed to by the argument names; any change to a parameter becomes a change to the corresponding argument. This indirection is why there exists a stipulation that all arguments to procedures be variables in cbr-Base.
 
-cbn-Base, cbneed-Base:
+cbn-Base, cbNeed-Base:
 
 Mem   μ   ::=  •                         (empty memory store)
            |   μ, l=v                    (extend with "l is v")
            |   μ, l=(𝜌,e)                (extend with "l is (𝜌,e)")
 
-⁴ The evaluation rule for procedure invocation is the same between cbn- and cbneed-Base. Each argument is first packaged into a thunk. Then, it is placed into a fresh location to be pointed to by the corresponding parameter name. The only difference between the two systems is whether the result of a forced thunk is memoized (i.e., updated in the memory store).
+⁴ The evaluation rule for procedure invocation is the same between cbn- and cbNeed-Base. Each argument is first packaged into a thunk. Then, it is placed into a fresh location to be pointed to by the corresponding parameter name. The only difference between the two systems is whether the result of a forced thunk is memoized (i.e., updated in the memory store).
 
 ----
