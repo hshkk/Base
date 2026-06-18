@@ -38,7 +38,7 @@ evalE :: (Env, Mem) -> Tagged Expr -> CBN (Val, Mem)
 evalE (r,m) (At (Var x) (Posn l c))
     | Just k <- Map.lookup x r 
     , Just b <- Map.lookup k m = case b of
-        Eq v    -> return (v,m)
+        Eq v -> return (v,m)
         Thunk s e -> do
             (w,_) <- evalE (s,m) e
             return (w,m)
