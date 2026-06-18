@@ -2,12 +2,39 @@
 module Base.Text.Pretty where
 
 import Base.Data.Expr
+    (Bin(..),
+     Body(..),
+     Con(..),
+     Expr(..),
+     Prim(..),
+     Prog,
+     Stmt(..),
+     Tagged(At),
+     Var)
 import Base.Data.Type (Type(..))
 import Base.Data.Val  (Val(..), Env, Loc)
 
 import Data.ByteString.Lazy.Char8 (ByteString)
-import Data.Text   (Text)
+import Data.Text (Text)
 import Prettyprinter
+    (Doc,
+     (<+>),
+     defaultLayoutOptions,
+     hsep,
+     indent,
+     layoutPretty,
+     line,
+     nest,
+     punctuate,
+     vsep,
+     braces,
+     brackets,
+     colon,
+     comma,
+     equals,
+     parens,
+     semi,
+     Pretty(pretty))
 import Prettyprinter.Render.Text (renderStrict)
 
 import qualified Data.ByteString.Lazy.Char8 as Byte (unpack)

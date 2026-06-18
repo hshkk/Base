@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Base.CBN.Text.Pretty where
 
-import Base.CBN.Mem
-import Base.Data.Expr
-import Base.Data.Val
+import Base.CBN.Mem   (Bind(..), Mem)
+import Base.Data.Expr (Tagged(At))
+import Base.Data.Val  (Loc)
 
-import Prettyprinter
+import Prettyprinter  (Doc)
 
 import qualified Base.Text.Pretty as Pretty (pprVal, pprVal', pprExpr)
 import qualified Data.Map as Map

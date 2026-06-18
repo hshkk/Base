@@ -12,9 +12,9 @@ Base is very much limited in what it can achieve in computation. For one, it lac
 Syntax:
 
 x, y, f    ∈   Var                       (An member of {a, …, z} followed by zero or more members of {a, …, z, A, …, Z, _, '})
-c          ∈   Con                       (0, 1, ..., True, False)
-Π          ∈   Prim                      (Int, Bool)
-⊕         ∈   Bin                       (_+_, _-_, _*_, _||_, _&&_)
+      c    ∈   Con                       (0, 1, ..., True, False)
+      Π    ∈   Prim                      (Int, Bool)
+      ⊕   ∈   Bin                       (_+_, _-_, _*_, _||_, _&&_)
 
 Prog  P   ::=  {s; … ; s;}
 

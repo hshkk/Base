@@ -73,10 +73,10 @@ stmts0 :: {[Tagged Stmt]}
     : {- ε -}         {[]}
     | stmts0 stmt ';' 
                       {$2:$1}
-    | stmts0 inst ';' 
+    | stmts0 init ';' 
                       {$2 ++ $1}
 
-inst :: {[Tagged Stmt]} -- x : Π = e
+init :: {[Tagged Stmt]} -- x : Π = e
     : var ':' prim '=' expr 
                       {let p = tkPosn $1
                        in [At (tkVar $1 := $5) p, At (Decl (tkVar $1) $3) p]}
