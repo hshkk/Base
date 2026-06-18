@@ -1,8 +1,8 @@
 Base is a small imperative language with static typing and CBV/R/N/Need variants.
-  • cbv-Base    (call-by-value)
-  • cbr-Base    (call-by-reference; procedure arguments are restricted to variables)
-  • cbn-Base    (call-by-name)
-  • cbNeed-Base (call-by-need)
+  • cbv-Base      (call-by-value)
+  • cbr-Base      (call-by-reference; procedure arguments are restricted to variables)
+  • cbn-Base      (call-by-name)
+  • cbNeed-Base   (call-by-need)
 If the restriction on cbr-Base is respected, the same program file will generally execute without errors under all four variants.
 
 Base is very much limited in what it can achieve in computation. For one, it lacks loops, recursion, or user-defined datatypes. It is rather meant to serve as a minimal, distraction-less environment in which one can play around with different parameter passing strategies.

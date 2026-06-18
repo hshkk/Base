@@ -20,6 +20,14 @@ decode = decodeLatin1 . Byte.toStrict
 
 type Err a = Either Error a
 
+data Error = Error { 
+    ty   :: ErrorType,
+    line :: Int, 
+    col  :: Int, 
+    unexpected :: Text
+    }
+    deriving Eq
+
 data ErrorType
     = Lexical
     | Syntax
@@ -38,14 +46,6 @@ data TypeError
 data EvalError
     = UnassignedVariable
     | NonvariableArguments
-    deriving Eq
-
-data Error = Error { 
-    ty   :: ErrorType,
-    line :: Int, 
-    col  :: Int, 
-    unexpected :: Text
-    }
     deriving Eq
 
 buildError :: ErrorType -> Int -> Int -> Text -> Error

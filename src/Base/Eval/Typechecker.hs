@@ -38,61 +38,7 @@ checkE g (At (Var x) (Posn l c))
     | otherwise = Left (buildError (Type UndeclaredVariable) l c (decode x))
 checkE _ (At (Con (I _)) _) = Right (TPrim Int)
 checkE _ (At (Con (B _)) _) = Right (TPrim Bool)
-checkE g (At (Bin Add e1 e2) _) = do
-    a1 <- checkE g e1
-    a2 <- checkE g e2
-    case (a1, a2) of
-        (TPrim Int, TPrim Int) -> Right (TPrim Int)
-        (TPrim Int, _) -> 
-            let Posn l c = posnOf e2 in
-            Left (buildError (Type (MismatchedOperand Add)) l c (render (pprType a2)))
-        (_, _) -> 
-            let Posn l c = posnOf e1 in
-            Left (buildError (Type (MismatchedOperand Add)) l c (render (pprType a1)))
-checkE g (At (Bin Sub e1 e2) _) = do
-    a1 <- checkE g e1
-    a2 <- checkE g e2
-    case (a1, a2) of
-        (TPrim Int, TPrim Int) -> Right (TPrim Int)
-        (TPrim Int, _) -> 
-            let Posn l c = posnOf e2 in
-            Left (buildError (Type (MismatchedOperand Sub)) l c (render (pprType a2)))
-        (_, _) -> 
-            let Posn l c = posnOf e1 in
-            Left (buildError (Type (MismatchedOperand Sub)) l c (render (pprType a1)))
-checkE g (At (Bin Mul e1 e2) _) = do
-    a1 <- checkE g e1
-    a2 <- checkE g e2
-    case (a1, a2) of
-        (TPrim Int, TPrim Int) -> Right (TPrim Int)
-        (TPrim Int, _) -> 
-            let Posn l c = posnOf e2 in
-            Left (buildError (Type (MismatchedOperand Mul)) l c (render (pprType a2)))
-        (_, _) -> 
-            let Posn l c = posnOf e1 in
-            Left (buildError (Type (MismatchedOperand Mul)) l c (render (pprType a1)))
-checkE g (At (Bin Or e1 e2) _) = do
-    a1 <- checkE g e1
-    a2 <- checkE g e2
-    case (a1, a2) of
-        (TPrim Bool, TPrim Bool) -> Right (TPrim Bool)
-        (TPrim Bool, _) -> 
-            let Posn l c = posnOf e2 in
-            Left (buildError (Type (MismatchedOperand Or)) l c (render (pprType a2)))
-        (_, _) -> 
-            let Posn l c = posnOf e1 in
-            Left (buildError (Type (MismatchedOperand Or)) l c (render (pprType a1)))
-checkE g (At (Bin And e1 e2) _) = do
-    a1 <- checkE g e1
-    a2 <- checkE g e2
-    case (a1, a2) of
-        (TPrim Bool, TPrim Bool) -> Right (TPrim Bool)
-        (TPrim Bool, _) -> 
-            let Posn l c = posnOf e2 in
-            Left (buildError (Type (MismatchedOperand And)) l c (render (pprType a2)))
-        (_, _) -> 
-            let Posn l c = posnOf e1 in
-            Left (buildError (Type (MismatchedOperand And)) l c (render (pprType a1)))
+checkE g (At (Bin op e1 e2) _) = checkBin g op e1 e2
 checkE g (At (Inv f es) (Posn l c))
     | Right (TProc as b) <- checkE g (At (Var f) (Posn l c)) = do
         cs <- mapM (checkE g) es
@@ -109,3 +55,24 @@ checkB :: TEnv -> Body -> Err Type
 checkB g0 (Ret ss e) = do
     gn <- foldM checkS g0 ss
     checkE gn e
+
+checkBin :: TEnv -> Bin -> Tagged Expr -> Tagged Expr -> Err Type
+checkBin g op e1 e2 = do
+    a1 <- checkE g e1
+    a2 <- checkE g e2
+    let x = binType op
+    case (a1 == x, a2 == x) of
+        (True,  True)  -> Right x
+        (True,  False) ->
+            let Posn l c = posnOf e2
+            in Left (buildError (Type (MismatchedOperand op)) l c (render (pprType a2)))
+        (False, _)     ->
+            let Posn l c = posnOf e1
+            in Left (buildError (Type (MismatchedOperand op)) l c (render (pprType a1)))
+    where
+        binType :: Bin -> Type
+        binType Add = TPrim Int
+        binType Sub = TPrim Int
+        binType Mul = TPrim Int
+        binType Or  = TPrim Bool
+        binType And = TPrim Bool
