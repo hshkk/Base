@@ -1,12 +1,22 @@
 module Base.CBV.Eval where
 
-import Base.CBV.Mem (Mem)
-import Base.Control.Dom
+import Base.CBV.Mem     (Mem)
+import Base.Control.Dom (dom, ran, restrict, subst, substs)
 import Base.Control.Err
+    (buildError,
+     decode,
+     ErrorType(Eval),
+     EvalError(UnassignedVariable))
 import Base.Data.Expr
-import Base.Data.Val
-import Base.Eval.Bin (bin)
-import Base.Eval.Monad
+    (Body(..), 
+     Expr(..), 
+     Posn(Posn), 
+     Prog, 
+     Stmt(..), 
+     Tagged(..))
+import Base.Data.Val   (Env, Val(..))
+import Base.Eval.Bin   (bin)
+import Base.Eval.Monad (fresh, freshK, throw, Eval)
 
 import Control.Monad (foldM)
 

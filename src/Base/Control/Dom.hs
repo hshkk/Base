@@ -1,7 +1,7 @@
 module Base.Control.Dom where
 
-import Data.Map  (Map)
-import Data.Set  (Set)
+import Data.Map (Map)
+import Data.Set (Set)
 
 import qualified Data.Map as Map
 import qualified Data.Set as Set

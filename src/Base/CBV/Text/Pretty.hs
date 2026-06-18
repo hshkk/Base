@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Base.CBV.Text.Pretty where
 
-import Base.CBV.Mem
-import Base.Data.Val
+import Base.CBV.Mem  (Mem)
+import Base.Data.Val (Loc)
 
-import Prettyprinter
+import Prettyprinter (Doc)
 
 import qualified Base.Text.Pretty as Pretty (pprVal, pprVal')
 import qualified Data.Map as Map

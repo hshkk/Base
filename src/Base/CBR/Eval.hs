@@ -1,17 +1,27 @@
 module Base.CBR.Eval where
 
-import Base.CBR.Mem (Mem)
-import Base.Control.Dom
+import Base.CBR.Mem     (Mem)
+import Base.Control.Dom (ran, restrict, subst, substs)
 import Base.Control.Err
+    (buildError,
+     decode,
+     ErrorType(Eval),
+     EvalError(NonvariableArguments, UnassignedVariable))
 import Base.Data.Expr
-import Base.Data.Val
-import Base.Eval.Bin (bin)
-import Base.Eval.Monad
+    (Body(..), 
+     Expr(..), 
+     Posn(Posn), 
+     Prog, 
+     Stmt(..), 
+     Tagged(..))
+import Base.Data.Val   (Env, Val(..))
+import Base.Eval.Bin   (bin)
+import Base.Eval.Monad (fresh, throw, Eval)
 
 import Control.Monad (foldM)
+import Data.Maybe    (mapMaybe)
 
 import qualified Data.Map as Map
-import Data.Maybe (mapMaybe)
 
 type CBR a = Eval Mem a
 

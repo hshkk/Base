@@ -1,14 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Base.Control.Err where
 
-import Base.Data.Expr
-import Base.Data.Type (Type)
-import Base.Text.Pretty
+import Base.Data.Expr   (Bin(..))
+import Base.Data.Type   (Type)
+import Base.Text.Pretty 
+    (pprBin, 
+     pprType, 
+     render)
 
 import Data.ByteString.Lazy.Char8 (ByteString)
 import Data.Text (Text)
 import Data.Text.Encoding (decodeLatin1)
-import Errata (Errata, Style(..), blockSimple, errataSimple, prettyErrors)
+import Errata 
+    (Errata, 
+     Style(..), 
+     blockSimple, 
+     errataSimple, 
+     prettyErrors)
 import Errata.Styles (basicStyle, basicPointer)
 
 import qualified Data.ByteString.Lazy.Char8 as Byte (toStrict)

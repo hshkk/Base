@@ -1,7 +1,7 @@
 module Base.Eval.Monad where
 
 import Base.Control.Err (Error, Err)
-import Base.Data.Val (Loc)
+import Base.Data.Val    (Loc)
 
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State  (StateT (runStateT), get, put)

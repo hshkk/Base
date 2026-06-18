@@ -2,13 +2,28 @@
 module Base.Eval.Typechecker where
 
 import Base.Control.Err
+    (buildError,
+     decode,
+     Err,
+     ErrorType(Type),
+     TypeError(..))
 import Base.Data.Expr
-import Base.Data.Type
-import Base.Text.Pretty
+    (posnOf,
+     Bin (..),
+     Body(..),
+     Con (..),
+     Expr(..),
+     Posn(Posn),
+     Prim(..),
+     Prog,
+     Stmt(..),
+     Tagged(..))
+import Base.Data.Type   (TEnv, Type(..))
+import Base.Text.Pretty (pprType, render)
 
 import Control.Monad  (foldM)
 import Data.Bifunctor (second)
-import Data.List (find)
+import Data.List      (find)
 
 import qualified Data.Map as Map
 
